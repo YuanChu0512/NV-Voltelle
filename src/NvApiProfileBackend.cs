@@ -92,7 +92,7 @@ namespace MVolt.Rebuild
         private void ValidateProfileVoltageCompatibility(MVoltProfile profile)
         {
             if (profile.MobileRelOnly && !NvApiVoltageLayouts.IsMobileRelOnlyGpu(name))
-                throw new NotSupportedException("此配置档要求兼容的 Blackwell REL-only 电压控制。当前 GPU 不匹配原版白名单。");
+                throw new NotSupportedException("此配置档要求兼容的 Blackwell REL-only 电压控制。当前 GPU 不匹配兼容规则。");
         }
 
         private ProfileWriteSnapshot CaptureProfileWriteSnapshot(MVoltProfile profile)

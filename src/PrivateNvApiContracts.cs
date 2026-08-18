@@ -1,7 +1,6 @@
 namespace MVolt.Rebuild
 {
-    // Recovered from mVolt+ 0.32 call sites. SET IDs are catalogued and their
-    // buffers are reproduced, but the application build gate still blocks calls.
+    // Internal NVAPI IDs and buffer versions used by NV Voltelle.
     internal static class PrivateNvApiContracts
     {
         internal const uint PstatesGet = 0x6FF81213;

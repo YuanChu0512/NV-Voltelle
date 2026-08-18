@@ -71,7 +71,7 @@ namespace MVolt.Rebuild
 
             byte[] buffer = CreatePstatesRequest();
 
-            // Exact mVolt+ 0.32 SET layout at 0x140040131-0x140040188.
+            // Pstates20 v2 single-domain SET layout.
             // Global bIsEditable and clock typeId remain zero.
             WriteInt32(buffer, 0x08, 1); // numPstates
             WriteInt32(buffer, 0x0C, 1); // numClocks

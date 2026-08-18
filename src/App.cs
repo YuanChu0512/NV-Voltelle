@@ -140,7 +140,7 @@ namespace MVolt.Rebuild
                     if (!suppressUi)
                     {
                         string note = reportKind.Value == DiagnosticReportKind.Compatibility
-                            ? "这是重构版的明文 GET-only 兼容报告；尚未复刻原版的公钥加密封装。\n\n"
+                            ? "这是 NV Voltelle 生成的明文 GET-only 兼容报告。\n\n"
                             : string.Empty;
                         MessageBox.Show(
                             VoltelleLocalization.T(note) + VoltelleLocalization.T("报告已写入：\n") + written,

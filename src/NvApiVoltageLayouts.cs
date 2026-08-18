@@ -285,8 +285,8 @@ namespace MVolt.Rebuild
         internal static bool IsMobileRelOnlyGpu(string gpuName)
         {
             if (String.IsNullOrEmpty(gpuName)) return false;
-            // mVolt+ 0.32 function 0x1400143A0 performs case-sensitive
-            // substring searches for these exact product names.
+            // REL-only control is limited to these mobile/workstation
+            // Blackwell product-name families.
             return gpuName.IndexOf("GeForce RTX 5090 Laptop GPU", StringComparison.Ordinal) >= 0 ||
                 gpuName.IndexOf("RTX PRO 6000 Blackwell Workstation Edition", StringComparison.Ordinal) >= 0;
         }
