@@ -226,7 +226,13 @@ namespace MVolt.Rebuild
             json.Append(',');
             AppendVf(json, snapshot.VfPoints, snapshot.VfError);
             json.Append(',');
-            AppendXbar(json, snapshot.Xbar);
+            AppendClockDomain(json, "xbar", snapshot.Xbar);
+            json.Append(',');
+            AppendClockDomain(json, "sys_clock", snapshot.SysClock);
+            json.Append(',');
+            AppendClockDomain(json, "video_clock", snapshot.VideoClock);
+            json.Append(',');
+            AppendFans(json, snapshot.Fans, snapshot.FanControlError);
             json.Append('}');
             return json.ToString();
         }
@@ -359,9 +365,10 @@ namespace MVolt.Rebuild
             json.Append("]}");
         }
 
-        private static void AppendXbar(StringBuilder json, XbarSnapshot xbar)
+        private static void AppendClockDomain(StringBuilder json, string name, XbarSnapshot xbar)
         {
-            json.Append("\"xbar\":{");
+            Quote(json, name);
+            json.Append(":{");
             Property(json, "error", xbar == null ? "unavailable" : xbar.Error);
             json.Append(',');
             NullableNumberProperty(json, "flags", xbar == null ? null : xbar.Flags);
@@ -374,6 +381,37 @@ namespace MVolt.Rebuild
             json.Append(',');
             NullableNumberProperty(json, "measured_frequency_khz", xbar == null ? null : xbar.MeasuredFrequencyKHz);
             json.Append('}');
+        }
+
+        private static void AppendFans(StringBuilder json, IList<FanSnapshot> fans, string error)
+        {
+            json.Append("\"fans\":{");
+            Property(json, "error", error);
+            json.Append(",\"channels\":[");
+            if (fans != null)
+            {
+                for (int index = 0; index < fans.Count; index++)
+                {
+                    if (index != 0) json.Append(',');
+                    FanSnapshot fan = fans[index];
+                    json.Append('{');
+                    NumberProperty(json, "cooler_id", fan.CoolerId);
+                    json.Append(',');
+                    NumberProperty(json, "maximum_rpm", fan.MaximumRpm);
+                    json.Append(',');
+                    NumberProperty(json, "current_rpm", fan.CurrentRpm);
+                    json.Append(',');
+                    NumberProperty(json, "minimum_duty_percent", fan.MinimumDutyPercent);
+                    json.Append(',');
+                    NumberProperty(json, "maximum_duty_percent", fan.MaximumDutyPercent);
+                    json.Append(',');
+                    NumberProperty(json, "current_duty_percent", fan.CurrentDutyPercent);
+                    json.Append(',');
+                    NumberProperty(json, "control_mode", fan.ControlMode);
+                    json.Append('}');
+                }
+            }
+            json.Append("]}");
         }
 
         private static void Property(StringBuilder json, string name, string value)

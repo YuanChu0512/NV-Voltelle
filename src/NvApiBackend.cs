@@ -108,6 +108,7 @@ namespace MVolt.Rebuild
             ReadClocks(result);
             ReadThermal(result);
             ReadFan(result);
+            ReadFanControl(result);
             ReadMemory(result);
             AddPrivateCapabilities(result.PrivateCapabilities);
             ReadVoltageRails(result);
@@ -267,6 +268,8 @@ namespace MVolt.Rebuild
             target["功耗限制 Info / Status / Control"] = AreResolved(PrivateNvApiContracts.PowerGetInfo, PrivateNvApiContracts.PowerGetStatus, PrivateNvApiContracts.PowerSetStatus);
             target["Boost Lock Status / Control"] = AreResolved(PrivateNvApiContracts.BoostLockGetStatus, PrivateNvApiContracts.BoostLockSetStatus);
             target["Crossbar Info / Get / Set / Measure"] = AreResolved(PrivateNvApiContracts.XbarGetInfo, PrivateNvApiContracts.XbarGetControl, PrivateNvApiContracts.XbarSetControl, PrivateNvApiContracts.XbarMeasureFrequency);
+            target["SYS / Video ClockDomains"] = AreResolved(PrivateNvApiContracts.XbarGetInfo, PrivateNvApiContracts.XbarGetControl, PrivateNvApiContracts.XbarSetControl, PrivateNvApiContracts.XbarMeasureFrequency);
+            target["Fan Coolers Info / Status / Control"] = AreResolved(PrivateNvApiContracts.FanCoolersGetInfo, PrivateNvApiContracts.FanCoolersGetStatus, PrivateNvApiContracts.FanCoolersGetControl, PrivateNvApiContracts.FanCoolersSetControl);
         }
 
         private void ReadAdcDevices(GpuSnapshot result)

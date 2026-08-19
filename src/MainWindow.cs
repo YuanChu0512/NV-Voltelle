@@ -67,6 +67,10 @@ namespace MVolt.Rebuild
         private string msvddMaximumDraft = string.Empty;
         private string voltageBoostDraft = string.Empty;
         private string xbarOffsetDraft = string.Empty;
+        private string sysClockOffsetDraft = string.Empty;
+        private string videoClockOffsetDraft = string.Empty;
+        private readonly Dictionary<uint, string> fanDutyDrafts = new Dictionary<uint, string>();
+        private readonly Dictionary<uint, bool> fanManualDrafts = new Dictionary<uint, bool>();
         private string vfPointDraft = string.Empty;
         private string vfTargetDraft = string.Empty;
         private string vfRegionStartDraft = string.Empty;
@@ -100,6 +104,8 @@ namespace MVolt.Rebuild
         private readonly bool forceReadOnly;
         private readonly bool uiQaMode;
         private readonly bool uiQaTrayCycle;
+        private readonly bool startupAutoApplyRequested;
+        private bool startupAutoApplyHandled;
         private bool minimizeToTray;
         private bool exitRequested;
         private Forms.NotifyIcon trayIcon;
@@ -122,13 +128,14 @@ namespace MVolt.Rebuild
             get { return uiQaMode || (backend != null && backend.HardwareWritesEnabled); }
         }
 
-        public MainWindow(bool startInTray, bool enableHardwareWrites, bool readOnly, bool enableUiQaMode, bool enableUiQaTrayCycle)
+        public MainWindow(bool startInTray, bool enableHardwareWrites, bool readOnly, bool enableUiQaMode, bool enableUiQaTrayCycle, bool enableStartupAutoApply)
         {
             startHiddenInTray = startInTray;
             allowHardwareWrites = enableHardwareWrites;
             forceReadOnly = readOnly;
             uiQaMode = enableUiQaMode;
             uiQaTrayCycle = enableUiQaTrayCycle;
+            startupAutoApplyRequested = enableStartupAutoApply;
             minimizeToTray = startInTray;
             Title = VoltelleBrand.ProductName + " â€” NVIDIA GPU è°ƒæ ¡å·¥ä½œå°";
             Width = 1320;
@@ -353,6 +360,3344 @@ namespace MVolt.Rebuild
                     return;
                 }
                 if (phase == 1)
-               ã9âÚ$z{-®éÜj×‚"’“°¢&÷&FW"&VÖ–æ–ærÒ6&E6†VÆÂ‚“°¢7F6µæVÂ&VÖ–æ–æu7F6²ÒæWr7F6µæVÂ‚“°¢&VÖ–æ–æu7F6²ä6†–ÆG&VâäFB„'VÆÆWB‚.[‹ŠxN[©NyJX˜Şi‹îzK®yºîj~Y(Îš8î™šzîŠêNûÉ¾Kˆ™JîZHŞKØŞy»Nhê^hš~ŠÎûÈÎKˆŞi‹îzK®zîŠêN[Ëz©~8""’“°¢&VÖ–æ–æu7F6²ä6†–ÆG&VâäFB„'VÆÆWB‚.jøşKŠ®šyºîxºÎz¸¾XiXZ^[›nY¹îŠû¾ûÉ¾ZK‹J^šKˆŞKÉ®i*N™H[{.h‰X©şšyºîûÈÎYî{ºŞšyºî{º~{ºŞhš~ŠÎ8""’“°¢&VÖ–æ–æu7F6²ä6†–ÆG&VâäFB„'VÆÆWB‚.YîXûh™y¹Xú®{»NhÈZéîi{n˜^kX¾ûÈÎKˆŞKÉ®YÊiÊ®zîŠêNi{nˆz®XªXiXZ^˜XŞ{Úî8""’“°¢&VÖ–æ–æu7F6²ä6†–ÆG&VâäFB„'VÆÆWB‚.i»NZJ~yºîj~8‹ëyXÎXÎY(Î‹IşY	j[ø>K¸Ş[©NyKyJh‹~˜	jÚ^š¨ÎŠøûÈÎKˆŞh›şŠû®z‹>Zé®h
-~8""’“°¢&VÖ–æ–ærä6†–ÆBÒ&VÖ–æ–æu7F6³°¢vRä6†–ÆG&VâäFB‡&VÖ–æ–ær“°¢&WGW&âvS°¢Ğ ¢&—fFR7FF–2T”VÆVÖVçB&öw&W746&B‡7G&–ærfÇVRÂ7G&–ærÆ&VÂÂ7G&–ær†–çB¢°¢&÷&FW"6&BÒ6&E6†VÆÂ‚“°¢7F6µæVÂ7F6²ÒæWr7F6µæVÂ‚“°¢7F6²ä6†–ÆG&VâäFB†æWrFW‡D&Æö6²²FW‡BÒfÇVRÂf÷&Vw&÷VæBÒ66VçD''W6‚ÂföçE6—¦RÒ#bÂföçEvV–v‡BÒföçEvV–v‡G2å6VÖ”&öÆBÒ“°¢7F6²ä6†–ÆG&VâäFB†æWrFW‡D&Æö6²²FW‡BÒÆ&VÂÂf÷&Vw&÷VæBÒ''W6†W2åv†—FRÂföçE6—¦RÒ"ÂÖ&v–âÒæWrF†–6¶æW72ƒÂBÂÂB’Ò“°¢7F6²ä6†–ÆG&VâäFB†æWrFW‡D&Æö6²²FW‡BÒ†–çBÂf÷&Vw&÷VæBÒ×WFVD''W6‚ÂföçE6—¦RÒ’ÂFW‡Ew&–ærÒFW‡Ew&–æråw&Ò“°¢6&Bä6†–ÆBÒ7F6³°¢&WGW&â6&C°¢Ğ ¢&—fFR7FF–2T”VÆVÖVçB'VÆÆWB‡7G&–ærFW‡B¢°¢w&–B&÷rÒæWrw&–B²Ö&v–âÒæWrF†–6¶æW72ƒÂRÂÂR’Ó°¢&÷rä6öÇVÖäFVf–æ—F–öç2äFB†æWr6öÇVÖäFVf–æ—F–öâ²v–GF‚ÒæWrw&–DÆVæwF‚ƒ‚’Ò“°¢&÷rä6öÇVÖäFVf–æ—F–öç2äFB†æWr6öÇVÖäFVf–æ—F–öâ²v–GF‚ÒæWrw&–DÆVæwF‚ƒÂw&–EVæ—EG—Rå7F"’Ò“°¢FW‡D&Æö6²F÷BÒæWrFW‡D&Æö6²²FW‡BÒ.(
-""Âf÷&Vw&÷VæBÒ66VçD''W6‚ÂföçE6—¦RÒRÓ°¢FW‡D&Æö6²&öG’ÒæWrFW‡D&Æö6²²FW‡BÒFW‡BÂf÷&Vw&÷VæBÒ''W6‚‚"43„C4S2"’ÂföçE6—¦RÒÂFW‡Ew&–ærÒFW‡Ew&–æråw&Ó°¢&÷rä6†–ÆG&VâäFB†F÷B“°¢w&–Bå6WD6öÇVÖâ†&öG’Â“°¢&÷rä6†–ÆG&VâäFB†&öG’“°¢&WGW&â&÷s°¢Ğ ¢&—fFR7FF–27F6µæVÂvU7F6²‚¢°¢&WGW&âæWr7F6µæVÂ²Ö&v–âÒæWrF†–6¶æW72ƒÂÂÂB’Ó°¢Ğ ¢&—fFR7FF–2&÷&FW"ÖWG&–2‡7G&–ærÆ&VÂÂ7G&–ærfÇVRÂ7G&–ær†–çB¢°¢&÷&FW"6&BÒ6&E6†VÆÂ‚“°¢7F6µæVÂ7F6²ÒæWr7F6µæVÂ‚“°¢7F6²ä6†–ÆG&VâäFB†æWrFW‡D&Æö6²²FW‡BÒÆ&VÂÂf÷&Vw&÷VæBÒ×WFVD''W6‚ÂföçE6—¦RÒ’ÂföçEvV–v‡BÒföçEvV–v‡G2å6VÖ”&öÆBÒ“°¢7F6²ä6†–ÆG&VâäFB†æWrFW‡D&Æö6°¢°¢FW‡BÒfÇVRÀ¢f÷&Vw&÷VæBÒ''W6†W2åv†—FRÀ¢föçE6—¦RÒ#À¢föçEvV–v‡BÒföçEvV–v‡G2å6VÖ”&öÆBÀ¢Ö&v–âÒæWrF†–6¶æW72ƒÂbÂÂB’À¢FW‡EG&–ÖÖ–ærÒFW‡EG&–ÖÖ–ærä6†&7FW$VÆÆ—6—0¢Ò“°¢7F6²ä6†–ÆG&VâäFB†æWrFW‡D&Æö6²²FW‡BÒ†–çBÂf÷&Vw&÷VæBÒ''W6‚‚"3dCt„R"’ÂföçE6—¦RÒ‚ÂFW‡Ew&–ærÒFW‡Ew&–æråw&Ò“°¢6&Bä6†–ÆBÒ7F6³°¢&WGW&â6&C°¢Ğ ¢&—fFR7FF–2&÷&FW"6&E6†VÆÂ‚¢°¢&WGW&âæWr&÷&FW ¢°¢&6¶w&÷VæBÒ6&D''W6‚À¢&÷&FW$''W6‚Ò7G&ö¶T''W6‚À¢&÷&FW%F†–6¶æW72ÒæWrF†–6¶æW72ƒ’À¢6÷&æW%&F—W2ÒæWr6÷&æW%&F—W2ƒB’À¢Ö&v–âÒæWrF†–6¶æW72ƒÂÂ"Â"’À¢FF–ærÒæWrF†–6¶æW72ƒrÂRÂrÂR¢Ó°¢Ğ ¢&—fFR7FF–2T”VÆVÖVçB6V7F–öä†VF–ær‡7G&–ærF—FÆRÂ7G&–ær7V'F—FÆR¢°¢7F6µæVÂ7F6²ÒæWr7F6µæVÂ²Ö&v–âÒæWrF†–6¶æW72ƒÂrÂÂ’Ó°¢7F6²ä6†–ÆG&VâäFB†æWrFW‡D&Æö6²²FW‡BÒF—FÆRÂföçE6—¦RÒbÂföçEvV–v‡BÒföçEvV–v‡G2å6VÖ”&öÆBÒ“°¢7F6²ä6†–ÆG&VâäFB†æWrFW‡D&Æö6²²FW‡BÒ7V'F—FÆRÂf÷&Vw&÷VæBÒ×WFVD''W6‚ÂföçE6—¦RÒÂÖ&v–âÒæWrF†–6¶æW72ƒÂBÂÂ’Ò“°¢&WGW&â7F6³°¢Ğ ¢&—fFR7FF–2&÷&FW"ÆW'B‡7G&–ærF—FÆRÂ7G&–ær&öG’Â&ööÂFævW"¢°¢&÷&FW"ÆW'BÒæWr&÷&FW ¢°¢&6¶w&÷VæBÒFævW"ò''W6‚‚"3$s""’¢66VçDF&´''W6‚À¢&÷&FW$''W6‚ÒFævW"ò''W6‚‚"3d#33’"’¢''W6‚‚"3#ƒSsCr"’À¢&÷&FW%F†–6¶æW72ÒæWrF†–6¶æW72ƒ’À¢6÷&æW%&F—W2ÒæWr6÷&æW%&F—W2ƒ’’À¢FF–ærÒæWrF†–6¶æW72ƒBÂÂBÂ’À¢Ö&v–âÒæWrF†–6¶æW72ƒÂÂÂ¢Ó°¢7F6µæVÂ7F6²ÒæWr7F6µæVÂ‚“°¢7F6²ä6†–ÆG&VâäFB†æWrFW‡D&Æö6²²FW‡BÒF—FÆRÂf÷&Vw&÷VæBÒFævW"òW'&÷$''W6‚¢66VçD''W6‚ÂföçEvV–v‡BÒföçEvV–v‡G2å6VÖ”&öÆBÂföçE6—¦RÒ"Ò“°¢7F6²ä6†–ÆG&VâäFB†æWrFW‡D&Æö6²²FW‡BÒ&öG’Âf÷&Vw&÷VæBÒFævW"ò''W6‚‚"4St#T$"’¢''W6‚‚"4#”C”42"’ÂföçE6—¦RÒÂFW‡Ew&–ærÒFW‡Ew&–æråw&ÂÖ&v–âÒæWrF†–6¶æW72ƒÂBÂÂ’Ò“°¢ÆW'Bä6†–ÆBÒ7F6³°¢&WGW&âÆW'C°¢Ğ ¢&—fFR7FF–2&÷&FW"V×G•7FFR‡7G&–ærFW‡B¢°¢&÷&FW"7FFRÒ6&E6†VÆÂ‚“°¢7FFRåFF–ærÒæWrF†–6¶æW72ƒ#Â3Â#Â3“°¢7FFRä6†–ÆBÒæWrFW‡D&Æö6²²FW‡BÒFW‡BÂf÷&Vw&÷VæBÒ×WFVD''W6‚Â†÷&—¦öçFÄÆ–væÖVçBÒ†÷&—¦öçFÄÆ–væÖVçBä6VçFW"Ó°¢&WGW&â7FFS°¢Ğ ¢&—fFR7FF–2T”VÆVÖVçB6&–Æ—G’‡7G&–ærÆ&VÂÂ&ööÂf–Æ&ÆR¢°¢w&–B&÷rÒæWrw&–B²Ö&v–âÒæWrF†–6¶æW72ƒÂbÂÂb’Ó°¢&÷rä6öÇVÖäFVf–æ—F–öç2äFB†æWr6öÇVÖäFVf–æ—F–öâ²v–GF‚ÒæWrw&–DÆVæwF‚ƒÂw&–EVæ—EG—Rå7F"’Ò“°¢&÷rä6öÇVÖäFVf–æ—F–öç2äFB†æWr6öÇVÖäFVf–æ—F–öâ²v–GF‚Òw&–DÆVæwF‚äWFòÒ“°¢&÷rä6†–ÆG&VâäFB†æWrFW‡D&Æö6²²FW‡BÒÆ&VÂÂf÷&Vw&÷VæBÒ''W6‚‚"43tC$S2"’ÂföçE6—¦RÒÒ“°¢&÷&FW"&FvRÒæWr&÷&FW ¢°¢&6¶w&÷VæBÒf–Æ&ÆRò66VçDF&´''W6‚¢''W6‚‚"33##"’À¢6÷&æW%&F—W2ÒæWr6÷&æW%&F—W2ƒ‚’À¢FF–ærÒæWrF†–6¶æW72ƒ‚Â2Â‚Â2¢Ó°¢&FvRä6†–ÆBÒæWrFW‡D&Æö6²²FW‡BÒf–Æ&ÆRò.XúşyJ‚"¢.iÊ®hùKé²"Âf÷&Vw&÷VæBÒf–Æ&ÆRò66VçD''W6‚¢W'&÷$''W6‚ÂföçE6—¦RÒ’Ó°¢w&–Bå6WD6öÇVÖâ†&FvRÂ“°¢&÷rä6†–ÆG&VâäFB†&FvR“°¢&WGW&â&÷s°¢Ğ ¢&—fFR7FF–2'WGFöâ&–Ö'”'WGFöâ‡7G&–ærFW‡B¢°¢&WGW&âæWr'WGFöà¢°¢6öçFVçBÒFW‡BÀ¢7G–ÆRÒF†VÖVD'WGFöå7G–ÆR‡G'VR¢Ó°¢Ğ ¢&—fFR7FF–2'WGFöâ6V6öæF'”'WGFöâ‡7G&–ærFW‡B¢°¢&WGW&âæWr'WGFöà¢°¢6öçFVçBÒFW‡BÀ¢7G–ÆRÒF†VÖVD'WGFöå7G–ÆR†fÇ6R¢Ó°¢Ğ ¢&—fFR7FF–27G–ÆRF†VÖVD'WGFöå7G–ÆR†&ööÂ&–Ö'’¢°¢7G–ÆR7G–ÆRÒæWr7G–ÆR‡G—Vöb„'WGFöâ’“°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂä&6¶w&÷VæE&÷W'G’Â&–Ö'’ò66VçD''W6‚¢6&D†÷fW$''W6‚’“°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂäf÷&Vw&÷VæE&÷W'G’Â&–Ö'’ò''W6‚‚"3s3b"’¢''W6†W2åv†—FR’“°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂä&÷&FW$''W6…&÷W'G’Â&–Ö'’ò66VçD''W6‚¢7G&ö¶T''W6‚’“°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂä&÷&FW%F†–6¶æW75&÷W'G’ÂæWrF†–6¶æW72ƒ’’“°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂåFF–æu&÷W'G’ÂæWrF†–6¶æW72ƒrÂ’ÂrÂ’’’“°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂäföçEvV–v‡E&÷W'G’ÂföçEvV–v‡G2å6VÖ”&öÆB’“°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"„g&ÖWv÷&´VÆVÖVçBä7W'6÷%&÷W'G’Â7—7FVÒåv–æF÷w2ä–çWBä7W'6÷'2ä†æB’“°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"…T”VÆVÖVçBå&VæFW%G&ç6f÷&Ô÷&–v–å&÷W'G’ÂæWrö–çBƒãRÂãR’’“°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"…T”VÆVÖVçBå&VæFW%G&ç6f÷&Õ&÷W'G’ÂæWr66ÆUG&ç6f÷&ÒƒÂ’’“° ¢6öçG&öÅFV×ÆFRFV×ÆFRÒæWr6öçG&öÅFV×ÆFR‡G—Vöb„'WGFöâ’“°¢g&ÖWv÷&´VÆVÖVçDf7F÷'’&÷&FW"ÒæWrg&ÖWv÷&´VÆVÖVçDf7F÷'’‡G—Vöb„&÷&FW"’“°¢&÷&FW"å6WEfÇVR„&÷&FW"ä6÷&æW%&F—W5&÷W'G’ÂæWr6÷&æW%&F—W2ƒ‚’“°¢&÷&FW"å6WD&–æF–ær„&÷&FW"ä&6¶w&÷VæE&÷W'G’ÂæWr&–æF–ær‚$&6¶w&÷VæB"’²&VÆF—fU6÷W&6RÒ&VÆF—fU6÷W&6RåFV×ÆFVE&VçBÒ“°¢&÷&FW"å6WD&–æF–ær„&÷&FW"ä&÷&FW$''W6…&÷W'G’ÂæWr&–æF–ær‚$&÷&FW$''W6‚"’²&VÆF—fU6÷W&6RÒ&VÆF—fU6÷W&6RåFV×ÆFVE&VçBÒ“°¢&÷&FW"å6WD&–æF–ær„&÷&FW"ä&÷&FW%F†–6¶æW75&÷W'G’ÂæWr&–æF–ær‚$&÷&FW%F†–6¶æW72"’²&VÆF—fU6÷W&6RÒ&VÆF—fU6÷W&6RåFV×ÆFVE&VçBÒ“°¢&÷&FW"å6WD&–æF–ær„&÷&FW"åFF–æu&÷W'G’ÂæWr&–æF–ær‚%FF–ær"’²&VÆF—fU6÷W&6RÒ&VÆF—fU6÷W&6RåFV×ÆFVE&VçBÒ“° ¢g&ÖWv÷&´VÆVÖVçDf7F÷'’&W6VçFW"ÒæWrg&ÖWv÷&´VÆVÖVçDf7F÷'’‡G—Vöb„6öçFVçE&W6VçFW"’“°¢&W6VçFW"å6WD&–æF–ær„6öçFVçE&W6VçFW"ä6öçFVçE&÷W'G’ÂæWr&–æF–ær‚$6öçFVçB"’²&VÆF—fU6÷W&6RÒ&VÆF—fU6÷W&6RåFV×ÆFVE&VçBÒ“°¢&W6VçFW"å6WD&–æF–ær„6öçFVçE&W6VçFW"ä6öçFVçEFV×ÆFU&÷W'G’ÂæWr&–æF–ær‚$6öçFVçEFV×ÆFR"’²&VÆF—fU6÷W&6RÒ&VÆF—fU6÷W&6RåFV×ÆFVE&VçBÒ“°¢&W6VçFW"å6WD&–æF–ær„6öçFVçE&W6VçFW"ä6öçFVçE7G&–ætf÷&ÖE&÷W'G’ÂæWr&–æF–ær‚$6öçFVçE7G&–ætf÷&ÖB"’²&VÆF—fU6÷W&6RÒ&VÆF—fU6÷W&6RåFV×ÆFVE&VçBÒ“°¢&W6VçFW"å6WD&–æF–ær„6öçFVçE&W6VçFW"ä†÷&—¦öçFÄÆ–væÖVçE&÷W'G’ÂæWr&–æF–ær‚$†÷&—¦öçFÄ6öçFVçDÆ–væÖVçB"’²&VÆF—fU6÷W&6RÒ&VÆF—fU6÷W&6RåFV×ÆFVE&VçBÒ“°¢&W6VçFW"å6WD&–æF–ær„6öçFVçE&W6VçFW"åfW'F–6ÄÆ–væÖVçE&÷W'G’ÂæWr&–æF–ær‚%fW'F–6Ä6öçFVçDÆ–væÖVçB"’²&VÆF—fU6÷W&6RÒ&VÆF—fU6÷W&6RåFV×ÆFVE&VçBÒ“°¢&÷&FW"äVæD6†–ÆB‡&W6VçFW"“°¢FV×ÆFRåf—7VÅG&VRÒ&÷&FW#°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂåFV×ÆFU&÷W'G’ÂFV×ÆFR’“°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂä†÷&—¦öçFÄ6öçFVçDÆ–væÖVçE&÷W'G’Â†÷&—¦öçFÄÆ–væÖVçBä6VçFW"’“°¢7G–ÆRå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂåfW'F–6Ä6öçFVçDÆ–væÖVçE&÷W'G’ÂfW'F–6ÄÆ–væÖVçBä6VçFW"’“° ¢G&–vvW"†÷fW"ÒæWrG&–vvW"²&÷W'G’ÒT”VÆVÖVçBä—4Ö÷W6T÷fW%&÷W'G’ÂfÇVRÒG'VRÓ°¢†÷fW"å6WGFW'2äFB†æWr6WGFW"„6öçG&öÂä&6¶w&÷VæE&÷W'G’Â&–Ö'’ò''W6‚‚"3ƒ$T$B"’¢''W6‚‚"3##3#Cr"’’“°¢7G–ÆRåG&–vvW'2äFB††÷fW"“° ¢G&–vvW"&W76VBÒæWrG&–vvW"²&÷W'G’Ò'WGFöä&6Rä—5&W76VE&÷W'G’ÂfÇVRÒG'VRÓ°¢&W76VBå6WGFW'2äFB†æWr6WGFW"…T”VÆVÖVçBå&VæFW%G&ç6f÷&Õ&÷W'G’ÂæWr66ÆUG&ç6f÷&Òƒã“‚Âã“‚’’“°¢7G–ÆRåG&–vvW'2äFB‡&W76VB“° ¢G&–vvW"F—6&ÆVBÒæWrG&–vvW"²&÷W'G’ÒT”VÆVÖVçBä—4Væ&ÆVE&÷W'G’ÂfÇVRÒfÇ6RÓ°¢F—6&ÆVBå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂä&6¶w&÷VæE&÷W'G’Â''W6‚‚"3##“3b"’’“°¢F—6&ÆVBå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂäf÷&Vw&÷VæE&÷W'G’Â''W6‚‚"3c“ss„"’’“°¢F—6&ÆVBå6WGFW'2äFB†æWr6WGFW"„6öçG&öÂä&÷&FW$''W6…&÷W'G’Â7G&ö¶T''W6‚’“°¢F—6&ÆVBå6WGFW'2äFB†æWr6WGFW"„g&ÖWv÷&´VÆVÖVçBä7W'6÷%&÷W'G’Â7—7FVÒåv–æF÷w2ä–çWBä7W'6÷'2ä'&÷r’“°¢7G–ÆRåG&–vvW'2äFB†F—6&ÆVB“°¢&WGW&â7G–ÆS°¢Ğ ¢&—fFR7FF–27G&–ærf÷&ÖB†F÷V&ÆSòfÇVRÂ7G&–ærVæ—B¢°¢&WGW&âfÇVRä†5fÇVRòfÇVRåfÇVRåFõ7G&–ær‚$ã"Â7VÇGW&T–æfòä–çf&–çD7VÇGW&R’²""²Væ—B¢.(	B#°¢Ğ ¢&—fFR7FF–27G&–ær†W…fÇVR‡V–çCòfÇVR¢°¢&WGW&âfÇVRä†5fÇVRò#‚"²fÇVRåfÇVRåFõ7G&–ær‚%ƒ‚"Â7VÇGW&T–æfòä–çf&–çD7VÇGW&R’¢.(	B#°¢Ğ ¢&—fFR7FF–27G&–ær÷F–öæÅT–çB‡V–çCòfÇVR¢°¢&WGW&âfÇVRä†5fÇVRòfÇVRåfÇVRåFõ7G&–ær„7VÇGW&T–æfòä–çf&–çD7VÇGW&R’¢.(	B#°¢Ğ ¢&—fFR7FF–27G&–ær&–ÅfÇVR„wU6æ6†÷B6×ÆRÂ–çB&–Ä–æFW‚¢°¢föÇFvU&–Ä6öçG&7B&–ÂÒ6×ÆRåföÇFvRÓÒçVÆÂòçVÆÂ¢6×ÆRåföÇFvRäf–æE&–Â‡&–Ä–æFW‚“°¢&WGW&â&–ÂÓÒçVÆÂò.(	B"¢‡&–Âå6Vç6VEWbòã’åFõ7G&–ær‚$ã"Â7VÇGW&T–æfòä–çf&–çD7VÇGW&R’²"Õb#°¢Ğ ¢&—fFR7FF–27G&–ær&–Å7VÖÖ'’„wU6æ6†÷B6×ÆRÂ–çB&–Ä–æFW‚¢°¢föÇFvU&–Ä6öçG&7B&–ÂÒ6×ÆRåföÇFvRÓÒçVÆÂòçVÆÂ¢6×ÆRåföÇFvRäf–æE&–Â‡&–Ä–æFW‚“°¢–b‡&–ÂÓÒçVÆÂ’&WGW&â%föÇE&–Ç2c"#°¢&WGW&â%$TÂ"²‡&–Âå&VÆ–&–Æ—G”Æ–Ö—EWbòR’²"+rÔ‚"²‡&–ÂäÖ†–×VÔÆ–Ö—EWbòR’²"+rÔ”â"²‡&–ÂäÖ–æ–×VÔÆ–Ö—EWbòR’²"Õb#°¢Ğ ¢&—fFR7FF–27G&–ærGVæ–æufÇVR†–çCòfÇVRÂ7G&–ærVæ—B¢°¢&WGW&âfÇVRä†5fÇVRòfÇVRåfÇVRåFõ7G&–ær„7VÇGW&T–æfòä–çf&–çD7VÇGW&R’²""²Væ—B¢.(	B#°¢Ğ ¢&—fFR7FF–27G&–ærGVæ–æu&ævR†–çCòÖ–æ–×VÒÂ–çCòÖ†–×VÒÂ7G&–ærVæ—B¢°¢&WGW&âÖ–æ–×VÒä†5fÇVRbbÖ†–×VÒä†5fÇVRò.XXŠë‚"²Ö–æ–×VÒåfÇVR²"ââ"²Ö†–×VÒåfÇVR²""²Væ—B¢.š›XªˆÈ>Y»NKˆŞXúşyJ‚#°¢Ğ ¢&—fFR7FF–27G&–ærfe7VÖÖ'’„wU6æ6†÷B6×ÆR¢°¢–b‡6×ÆRåfeö–çG2ä6÷VçBÓÒ’&WGW&â%%E‚S7FGW2ô6öçG&öÂ#°¢feö–çE6æ6†÷Bf—'7BÒ6×ÆRåfeö–çG5³Ó°¢feö–çE6æ6†÷BÆ7BÒ6×ÆRåfeö–çG5·6×ÆRåfeö–çG2ä6÷VçBÒÓ°¢&WGW&â†f—'7BåföÇFvUWbòR’²"ââ"²†Æ7BåföÇFvUWbòR’²"Õb#°¢Ğ ¢&—fFR7FF–27G&–ær†&$öfg6WB„wU6æ6†÷B6×ÆR¢°¢&WGW&â6×ÆRå†&"ä7W'&VçDöfg6WD´‡¢ä†5fÇVRò‡6×ÆRå†&"ä7W'&VçDöfg6WD´‡¢åfÇVRò’²"Ô‡¢"¢.(	B#°¢Ğ ¢&—fFR7FF–27G&–ær†&%7VÖÖ'’„wU6æ6†÷B6×ÆR¢°¢–b‚6×ÆRå†&"äÖ–æ–×VÔöfg6WDÔ‡¢ä†5fÇVRÇÂ6×ÆRå†&"äÖ†–×VÔöfg6WDÔ‡¢ä†5fÇVR’&WGW&â$6Æö6´FöÖ–ç2%E‚S#°¢&WGW&â.XXŠë‚"²6×ÆRå†&"äÖ–æ–×VÔöfg6WDÔ‡¢åfÇVR²"ââ"²6×ÆRå†&"äÖ†–×VÔöfg6WDÔ‡¢åfÇVR²"Ô‡¢#°¢Ğ ¢&—fFR7FF–27G&–ær÷vW$Ööæ—F÷$&ö&B„wU6æ6†÷B6×ÆR¢°¢&WGW&â6×ÆRå÷vW%FVÆVÖWG'’ÒçVÆÂbb6×ÆRå÷vW%FVÆVÖWG'’äÖöæ—F÷"ÒçVÆÀ¢ò6×ÆRå÷vW%FVÆVÖWG'’äÖöæ—F÷"ä&ö&E÷vW%vGG2åFõ7G&–ær‚$ã""Â7VÇGW&T–æfòä–çf&–çD7VÇGW&R’²"r ¢¢.(	B#°¢Ğ ¢&—fFR7FF–27G&–ærF÷öÆöw•÷vW"„wU6æ6†÷B6×ÆRÂ&ööÂ6†—¢°¢–b‡6×ÆRå÷vW%FVÆVÖWG'’ÓÒçVÆÂÇÂ6×ÆRå÷vW%FVÆVÖWG'’åF÷öÆöw’ÓÒçVÆÂ’&WGW&â.(	B#°¢F÷V&ÆSòfÇVRÒ6†—ò6×ÆRå÷vW%FVÆVÖWG'’åF÷öÆöw’ä6†—÷vW%vGG2¢6×ÆRå÷vW%FVÆVÖWG'’åF÷öÆöw’ä&ö&E÷vW%vGG3°¢&WGW&âfÇVRä†5fÇVRòfÇVRåfÇVRåFõ7G&–ær‚$ã""Â7VÇGW&T–æfòä–çf&–çD7VÇGW&R’²"r"¢.(	B#°¢Ğ ¢&—fFR7FF–27G&–ær6W76–öäVæW&w’„wU6æ6†÷B6×ÆR¢°¢&WGW&â6×ÆRå÷vW%FVÆVÖWG'’ÒçVÆÂbb6×ÆRå÷vW%FVÆVÖWG'’äÖöæ—F÷"ÒçVÆÀ¢ò6×ÆRå÷vW%FVÆVÖWG'’äÖöæ—F÷"å&–Ö'•6W76–öäVæW&w•v‚åFõ7G&–ær‚$ãB"Â7VÇGW&T–æfòä–çf&–çD7VÇGW&R’²"v‚ ¢¢.(	B#°¢Ğ ¢&—fFR7FF–2''W6‚''W6‚‡7G&–ær†W‚¢°¢&WGW&â„''W6‚–æWr''W6„6öçfW'FW"‚’ä6öçfW'Dg&öÕ7G&–ær††W‚“°¢Ğ¢Ğ§Ğ
+                {
+                    phase = 2;
+                    ShowFromTray();
+                    return;
+                }
+                trayCycle.Stop();
+                bool restored = IsVisible && ShowInTaskbar && trayIcon != null && !trayIcon.Visible;
+                statusText.Text = restored
+                    ? "UI éªŒæ”¶å®Œæˆï¼šç³»ç»Ÿæ‰˜ç›˜éšè—ä¸æ¢å¤è·¯å¾„å‡å¯ç”¨ã€‚"
+                    : "UI éªŒæ”¶å¤±è´¥ï¼šç³»ç»Ÿæ‰˜ç›˜æ¢å¤çŠ¶æ€ä¸ä¸€è‡´ã€‚";
+                statusText.Foreground = restored ? AccentBrush : ErrorBrush;
+            };
+            trayCycle.Start();
+        }
+
+        private UIElement BuildChrome()
+        {
+            Grid root = new Grid();
+            root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(248) });
+            root.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            Border sidebar = new Border
+            {
+                Background = SidebarBrush,
+                BorderBrush = StrokeBrush,
+                BorderThickness = new Thickness(0, 0, 1, 0)
+            };
+            sidebar.Child = BuildSidebar();
+            root.Children.Add(sidebar);
+
+            Grid main = new Grid { Margin = new Thickness(32, 25, 32, 20) };
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            main.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            main.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            Grid.SetColumn(main, 1);
+            root.Children.Add(main);
+
+            main.Children.Add(BuildHeader());
+
+            pageScroll = new ScrollViewer
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+                Margin = new Thickness(0, 18, 0, 14)
+            };
+            pageHost = new ContentControl();
+            pageScroll.Content = pageHost;
+            Grid.SetRow(pageScroll, 1);
+            main.Children.Add(pageScroll);
+
+            Border footer = new Border
+            {
+                BorderBrush = StrokeBrush,
+                BorderThickness = new Thickness(0, 1, 0, 0),
+                Padding = new Thickness(0, 12, 0, 0)
+            };
+            Grid footerGrid = new Grid();
+            footerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            footerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            statusText = new TextBlock { Text = "åˆå§‹åŒ–ä¸­", Foreground = AccentBrush, FontSize = 12, TextWrapping = TextWrapping.Wrap };
+            timestampText = new TextBlock { Text = "â€”", Foreground = MutedBrush, FontSize = 11, Margin = new Thickness(18, 0, 0, 0) };
+            footerGrid.Children.Add(statusText);
+            Grid.SetColumn(timestampText, 1);
+            footerGrid.Children.Add(timestampText);
+            footer.Child = footerGrid;
+            Grid.SetRow(footer, 2);
+            main.Children.Add(footer);
+            return root;
+        }
+
+        private UIElement BuildSidebar()
+        {
+            Grid grid = new Grid { Margin = new Thickness(20, 24, 18, 20) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            Grid brand = new Grid();
+            brand.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
+            brand.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            Border mark = new Border
+            {
+                Width = 38,
+                Height = 38,
+                Background = AccentDarkBrush,
+                BorderBrush = Brush("#327866"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(11),
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+            mark.Child = new TextBlock
+            {
+                Text = "NV",
+                Foreground = AccentBrush,
+                FontSize = 14,
+                FontWeight = FontWeights.Bold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            brand.Children.Add(mark);
+            StackPanel brandText = new StackPanel { Margin = new Thickness(6, 0, 0, 0) };
+            brandText.Children.Add(new TextBlock { Text = "Voltelle", FontSize = 22, FontWeight = FontWeights.SemiBold, Foreground = Brushes.White });
+            brandText.Children.Add(new TextBlock
+            {
+                Text = "GPU TUNING STUDIO Â· " + VoltelleBrand.ProductVersion,
+                Foreground = AccentBrush,
+                FontSize = 8,
+                Margin = new Thickness(0, 3, 0, 0)
+            });
+            Grid.SetColumn(brandText, 1);
+            brand.Children.Add(brandText);
+            grid.Children.Add(brand);
+
+            StackPanel nav = new StackPanel { Margin = new Thickness(0, 38, 0, 0) };
+            AddNav(nav, PageOverview, "å®æ—¶çŠ¶æ€ä¸ç¡¬ä»¶èº«ä»½");
+            AddNav(nav, PageTuning, "æ ¸å¿ƒã€æ˜¾å­˜ã€åŠŸè€—ä¸é”é¢‘");
+            AddNav(nav, PageVoltage, "ç”µå‹è½¨ã€Crossbar ä¸ V/F æ›²çº¿");
+            AddNav(nav, PagePower, "é€é€šé“åŠŸç‡ã€ç”µæµä¸ç”µå‹");
+            AddNav(nav, PageProfiles, "ä¿å­˜ã€é¢„è§ˆä¸åˆ†é¡¹åº”ç”¨");
+            AddNav(nav, PageInterfaces, "æ¥å£æ”¯æŒä¸éªŒè¯çŠ¶æ€");
+            Grid.SetRow(nav, 1);
+            grid.Children.Add(nav);
+
+            Border safety = new Border
+            {
+                Background = CardBrush,
+                BorderBrush = StrokeBrush,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(14),
+                Padding = new Thickness(15)
+            };
+            StackPanel safetyStack = new StackPanel();
+            safetyStack.Children.Add(new TextBlock { Text = "è¿è¡Œæ¨¡å¼", Foreground = MutedBrush, FontSize = 9 });
+            writeModeValue = new TextBlock
+            {
+                Text = "åˆå§‹åŒ–ä¸­",
+                Foreground = AccentBrush,
+                FontWeight = FontWeights.SemiBold,
+                FontSize = 17,
+                Margin = new Thickness(0, 5, 0, 5)
+            };
+            safetyStack.Children.Add(writeModeValue);
+            writeModeDescription = new TextBlock
+            {
+                Text = "æ­£åœ¨è¿æ¥ NVAPIã€‚",
+                Foreground = MutedBrush,
+                FontSize = 9,
+                TextWrapping = TextWrapping.Wrap,
+                LineHeight = 15
+            };
+            safetyStack.Children.Add(writeModeDescription);
+            safetyStack.Children.Add(new Border { Height = 1, Background = StrokeBrush, Margin = new Thickness(0, 13, 0, 11) });
+            safetyStack.Children.Add(new TextBlock { Text = VoltelleBrand.FreeNotice, Foreground = SecondaryAccentBrush, FontSize = 10, FontWeight = FontWeights.SemiBold });
+            safetyStack.Children.Add(new TextBlock { Text = "åˆ¶ä½œè€… " + VoltelleBrand.Maker + "\nBç«™ @" + VoltelleBrand.BilibiliId, Foreground = MutedBrush, FontSize = 9, Margin = new Thickness(0, 4, 0, 0), LineHeight = 15 });
+            safety.Child = safetyStack;
+            Grid.SetRow(safety, 2);
+            grid.Children.Add(safety);
+            return grid;
+        }
+
+        private UIElement BuildHeader()
+        {
+            Grid header = new Grid();
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            StackPanel left = new StackPanel();
+            pageTitle = new TextBlock { Text = PageOverview, Foreground = MutedBrush, FontSize = 11, FontWeight = FontWeights.SemiBold };
+            gpuTitle = new TextBlock { Text = "æ­£åœ¨è¿æ¥ NVAPIâ€¦", FontSize = 25, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 5, 0, 0) };
+            gpuSubtitle = new TextBlock { Text = "é©±åŠ¨ä¸ VBIOS ä¿¡æ¯", Foreground = MutedBrush, FontSize = 12, Margin = new Thickness(0, 6, 0, 0) };
+            pageSubtitle = new TextBlock { Text = "", Foreground = Brush("#65768D"), FontSize = 10, Margin = new Thickness(0, 3, 0, 0) };
+            left.Children.Add(pageTitle);
+            left.Children.Add(gpuTitle);
+            left.Children.Add(gpuSubtitle);
+            left.Children.Add(pageSubtitle);
+            header.Children.Add(left);
+
+            StackPanel headerActions = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+            languageButton = SecondaryButton("EN");
+            languageButton.MinWidth = 58;
+            languageButton.Click += delegate
+            {
+                VoltelleLocalization.Set(VoltelleLocalization.IsEnglish ? VoltelleLanguage.Chinese : VoltelleLanguage.English);
+                ApplyCurrentLanguage(false);
+            };
+            headerActions.Children.Add(languageButton);
+            Button trayButton = SecondaryButton("åå°è¿è¡Œ");
+            trayButton.Margin = new Thickness(9, 0, 0, 0);
+            trayButton.ToolTip = "éšè—ä¸»çª—å£å¹¶ç»§ç»­åœ¨ç³»ç»Ÿæ‰˜ç›˜é‡‡æ ·";
+            trayButton.Click += delegate
+            {
+                minimizeToTray = true;
+                HideToTray();
+            };
+            headerActions.Children.Add(trayButton);
+            refreshButton = SecondaryButton("â†»  åˆ·æ–°é‡‡æ ·");
+            refreshButton.Margin = new Thickness(9, 0, 0, 0);
+            refreshButton.VerticalAlignment = VerticalAlignment.Center;
+            refreshButton.Click += delegate { RefreshSnapshot(); };
+            resetAllButton = SecondaryButton("ä¸€é”®å¤ä½");
+            resetAllButton.Margin = new Thickness(9, 0, 0, 0);
+            resetAllButton.Foreground = ErrorBrush;
+            resetAllButton.BorderBrush = Brush("#6B303A");
+            resetAllButton.Background = Brush("#26151A");
+            resetAllButton.ToolTip = "ç«‹å³æŠŠå…¨éƒ¨å¯è°ƒé¡¹ç›®æ¢å¤ä¸ºé©±åŠ¨é»˜è®¤å€¼å¹¶æ‰§è¡Œ GET å›è¯»";
+            resetAllButton.IsEnabled = false;
+            resetAllButton.Click += delegate { ResetAllAndApplyDirect(); };
+            headerActions.Children.Add(resetAllButton);
+            headerActions.Children.Add(refreshButton);
+            Grid.SetColumn(headerActions, 1);
+            header.Children.Add(headerActions);
+            return header;
+        }
+
+        private void AddNav(Panel parent, string name, string description)
+        {
+            Button button = new Button
+            {
+                Tag = name,
+                Style = ThemedButtonStyle(false),
+                Background = Brushes.Transparent,
+                BorderBrush = Brushes.Transparent,
+                BorderThickness = new Thickness(0),
+                Padding = new Thickness(11, 10, 10, 10),
+                Margin = new Thickness(0, 0, 0, 5),
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                FocusVisualStyle = null
+            };
+            Grid content = new Grid();
+            content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(28) });
+            content.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            TextBlock glyph = new TextBlock
+            {
+                Text = NavGlyph(name),
+                Foreground = Brush("#6F7E92"),
+                FontFamily = new FontFamily("Segoe MDL2 Assets"),
+                FontSize = 13,
+                VerticalAlignment = VerticalAlignment.Center
+            };
+            content.Children.Add(glyph);
+            StackPanel text = new StackPanel();
+            text.Children.Add(new TextBlock { Text = name, Foreground = MutedBrush, FontSize = 12, FontWeight = FontWeights.SemiBold });
+            text.Children.Add(new TextBlock { Text = description, Foreground = Brush("#647187"), FontSize = 8, Margin = new Thickness(0, 3, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis });
+            Grid.SetColumn(text, 1);
+            content.Children.Add(text);
+            button.Content = content;
+            button.Click += delegate(object sender, RoutedEventArgs args) { SelectPage((string)((Button)sender).Tag); };
+            navigation[name] = button;
+            parent.Children.Add(button);
+        }
+
+        private void SelectPage(string page)
+        {
+            activePage = page;
+            foreach (KeyValuePair<string, Button> item in navigation)
+            {
+                bool selected = item.Key == page;
+                item.Value.Background = selected ? Brush("#17272A") : Brushes.Transparent;
+                item.Value.BorderBrush = selected ? Brush("#2E5C51") : Brushes.Transparent;
+                item.Value.BorderThickness = new Thickness(1);
+                Grid content = item.Value.Content as Grid;
+                if (content != null && content.Children.Count >= 2)
+                {
+                    TextBlock glyph = content.Children[0] as TextBlock;
+                    StackPanel stack = content.Children[1] as StackPanel;
+                    if (glyph != null) glyph.Foreground = selected ? AccentBrush : Brush("#6F7E92");
+                    if (stack != null && stack.Children.Count != 0)
+                        ((TextBlock)stack.Children[0]).Foreground = selected ? AccentBrush : MutedBrush;
+                }
+            }
+            pageTitle.Text = page.ToUpperInvariant();
+            pageSubtitle.Text = PageDescription(page);
+            profileDirty = false;
+            RenderActivePage();
+            ApplyLocalizationToTree(Content as DependencyObject, true);
+            if (pageScroll != null) pageScroll.ScrollToTop();
+        }
+
+        private static string NavGlyph(string page)
+        {
+            if (page == PageOverview) return "\uE80F";
+            if (page == PageTuning) return "\uE9D2";
+            if (page == PageVoltage) return "\uE945";
+            if (page == PagePower) return "\uE9D9";
+            if (page == PageProfiles) return "\uE8A5";
+            return "\uE946";
+        }
+
+        private static string PageDescription(string page)
+        {
+            if (page == PageTuning) return "æ ¸å¿ƒã€æ˜¾å­˜ã€åŠŸè€—ä¸ Boost Lock çš„åˆ†é¡¹è°ƒæ ¡";
+            if (page == PageVoltage) return "Blackwell ç”µå‹è½¨ã€Crossbar ä¸ RTX 50 V/F æ›²çº¿";
+            if (page == PagePower) return "Power Monitorã€Power Topology ä¸é™é¢‘åŸå› ";
+            if (page == PageProfiles) return "ä¸ GPU/VBIOS ç»‘å®šçš„å‘½åé…ç½®æ¡£å’Œåˆ†é¡¹åº”ç”¨";
+            if (page == PageInterfaces) return "42 ä¸ª QueryInterface å…¥å£ä¸å®æœºéªŒè¯çŠ¶æ€";
+            return "å®æ—¶é¥æµ‹ã€ç¡¬ä»¶èº«ä»½ä¸å½“å‰è°ƒæ ¡çŠ¶æ€";
+        }
+
+        private void InitializeBackend()
+        {
+            try
+            {
+                nvBackend = new NvApiBackend(allowHardwareWrites);
+                backend = nvBackend;
+                tuningCoordinator = new SafeWriteCoordinator(nvBackend, nvBackend.HardwareWritesEnabled);
+                UpdateWriteMode();
+                RefreshSnapshot();
+            }
+            catch (Exception ex)
+            {
+                statusText.Text = "NVAPI åˆå§‹åŒ–å¤±è´¥ï¼š" + ex.Message;
+                statusText.Foreground = ErrorBrush;
+                gpuTitle.Text = "æœªè¿æ¥ NVIDIA é©±åŠ¨";
+                gpuSubtitle.Text = "è¯·æ£€æŸ¥é©±åŠ¨å’Œ 64 ä½ NVAPI";
+                RenderActivePage();
+                ApplyLocalizationToTree(Content as DependencyObject, true);
+            }
+        }
+
+        private void UpdateWriteMode()
+        {
+            bool enabled = CanInitiateWrite;
+            if (enabled)
+            {
+                if (writeModeValue != null)
+                {
+                    writeModeValue.Text = uiQaMode ? "UI éªŒæ”¶" : "å†™å…¥å¯ç”¨";
+                    writeModeValue.Foreground = ErrorBrush;
+                    writeModeDescription.Text = uiQaMode ? "æµ‹è¯•æ„å»º Â· ç¡¬ä»¶ SET å·²ç¡¬ç¦ç”¨" : "ç®¡ç†å‘˜æ¨¡å¼ Â· å¸¸è§„åº”ç”¨ç¡®è®¤ï¼Œä¸€é”®å¤ä½ç›´æ¥æ‰§è¡Œ";
+                }
+            }
+            else
+            {
+                if (writeModeValue != null)
+                {
+                    writeModeValue.Text = forceReadOnly ? "åªè¯»æ¨¡å¼" : "å†™å…¥ä¸å¯ç”¨";
+                    writeModeValue.Foreground = AccentBrush;
+                    writeModeDescription.Text = forceReadOnly ? "ç”± --read-only æ˜ç¡®å¯ç”¨" : "è¯·ä½¿ç”¨æ­£å¼ç®¡ç†å‘˜æ„å»º";
+                }
+            }
+        }
+
+        private void InitializeProfileStore()
+        {
+            if (profileStore != null || snapshot == null) return;
+            try
+            {
+                profileStore = new ProfileStore(snapshot.Name, snapshot.Vbios);
+                profileDocument = profileStore.Load();
+                pendingProfile = StartupProfilePolicy.SelectAutomaticProfile(profileDocument);
+                profileError = null;
+                if (profileDocument.Profiles.Count != 0)
+                {
+                    selectedProfileId = profileDocument.Profiles[0].Id;
+                    profileNameDraft = profileDocument.Profiles[0].Name;
+                }
+            }
+            catch (Exception ex)
+            {
+                profileError = ex.Message;
+                profileDocument = null;
+            }
+        }
+
+        private void RefreshSnapshot()
+        {
+            if (backend == null) return;
+            refreshButton.IsEnabled = false;
+            try
+            {
+                GpuSnapshot sampled = backend.Read();
+                bool firstSample = !startupBaselineCaptured;
+                if (firstSample)
+                {
+                    // Startup is deliberately GET-only. Saved profiles remain inert until
+                    // the user explicitly loads or applies one from the Profiles page.
+                    pendingProfile = null;
+                    stagedVfChanges.Clear();
+                    voltageDraftInitialized = false;
+                    startupBaselineCaptured = true;
+                }
+                snapshot = sampled;
+                InitializeProfileStore();
+                if (resetAllButton != null) resetAllButton.IsEnabled = CanInitiateWrite;
+                gpuTitle.Text = snapshot.Name;
+                gpuSubtitle.Text = "é©±åŠ¨ " + snapshot.Driver + "  Â·  " + snapshot.DriverBranch + "  Â·  VBIOS " + snapshot.Vbios;
+                statusText.Text = firstSample
+                    ? "å¯åŠ¨ GET åŸºçº¿å·²è¯»å– Â· æœªè‡ªåŠ¨åº”ç”¨ä»»ä½•ä¿å­˜é…ç½®ï¼›" + BuildStatus(snapshot)
+                    : BuildStatus(snapshot);
+                statusText.Foreground = HasErrors(snapshot) ? WarningBrush : AccentBrush;
+                timestampText.Text = "æœ€åé‡‡æ · " + snapshot.Timestamp.ToString("HH:mm:ss", CultureInfo.InvariantCulture) + "  Â·  2 ç§’åˆ·æ–°";
+                bool preserveEditor =
+                    activePage == PageTuning ||
+                    activePage == PageVoltage ||
+                    (activePage == PageProfiles && profileDirty);
+                if (!preserveEditor) RenderActivePage();
+                if (firstSample && startupAutoApplyRequested && !startupAutoApplyHandled)
+                    Dispatcher.BeginInvoke(new Action(ApplyStartupProfileIfRequested));
+            }
+            catch (Exception ex)
+            {
+                if (resetAllButton != null) resetAllButton.IsEnabled = false;
+                statusText.Text = "åˆ·æ–°å¤±è´¥ï¼š" + ex.Message;
+                statusText.Foreground = ErrorBrush;
+            }
+            finally
+            {
+                refreshButton.IsEnabled = true;
+                ApplyLocalizationToTree(Content as DependencyObject, true);
+            }
+        }
+
+        private void ApplyStartupProfileIfRequested()
+        {
+            if (startupAutoApplyHandled) return;
+            startupAutoApplyHandled = true;
+            MVoltProfile profile = StartupProfilePolicy.SelectAutomaticProfile(profileDocument, startupAutoApplyRequested);
+            if (profile == null)
+            {
+                statusText.Text = "å¼€æœºè‡ªåŠ¨åº”ç”¨æœªæ‰§è¡Œï¼šæœªæ‰¾åˆ°å·²å¯ç”¨çš„å¯åŠ¨é…ç½®æ¡£ã€‚";
+                statusText.Foreground = WarningBrush;
+                return;
+            }
+            if (nvBackend == null || !nvBackend.HardwareWritesEnabled)
+            {
+                statusText.Text = "å¼€æœºè‡ªåŠ¨åº”ç”¨æœªæ‰§è¡Œï¼šç®¡ç†å‘˜å†™å…¥æ¨¡å¼ä¸å¯ç”¨ã€‚";
+                statusText.Foreground = ErrorBrush;
+                return;
+            }
+            try
+            {
+                BestEffortWriteResult result = nvBackend.ApplyProfileVerified(profile);
+                statusText.Text = result.HasFailures
+                    ? "å¼€æœºé…ç½®æ¡£å·²éƒ¨åˆ†åº”ç”¨ï¼šæˆåŠŸ " + result.SuccessfulLabels() + "ï¼›å¤±è´¥ " + result.FailureDetails()
+                    : "å¼€æœºé…ç½®æ¡£å·²åº”ç”¨å¹¶å›è¯»ï¼š" + profile.Name;
+                statusText.Foreground = result.HasFailures ? WarningBrush : AccentBrush;
+                voltageDraftInitialized = false;
+                snapshot = backend.Read();
+                RenderActivePage();
+            }
+            catch (Exception ex)
+            {
+                statusText.Text = "å¼€æœºè‡ªåŠ¨åº”ç”¨å¤±è´¥ï¼š" + ex.Message;
+                statusText.Foreground = ErrorBrush;
+            }
+        }
+
+        private static bool HasErrors(GpuSnapshot sample)
+        {
+            return sample.Tuning.Errors.Count != 0 ||
+                !string.IsNullOrEmpty(sample.VfError) ||
+                !string.IsNullOrEmpty(sample.Xbar.Error) ||
+                !string.IsNullOrEmpty(sample.SysClock.Error) ||
+                !string.IsNullOrEmpty(sample.VideoClock.Error) ||
+                !string.IsNullOrEmpty(sample.FanControlError) ||
+                !string.IsNullOrEmpty(sample.VoltageError) ||
+                !string.IsNullOrEmpty(sample.AdcError) ||
+                !string.IsNullOrEmpty(sample.PowerTelemetryError);
+        }
+
+        private static string BuildStatus(GpuSnapshot sample)
+        {
+            List<string> parts = new List<string>();
+            parts.Add(sample.Status);
+            if (sample.Tuning.Errors.Count != 0) parts.Add("è°ƒæ ¡ GET: " + string.Join(" | ", new List<string>(sample.Tuning.Errors).ToArray()));
+            if (!string.IsNullOrEmpty(sample.VfError)) parts.Add("V/F: " + sample.VfError);
+            if (!string.IsNullOrEmpty(sample.Xbar.Error)) parts.Add("Crossbar: " + sample.Xbar.Error);
+            if (!string.IsNullOrEmpty(sample.VoltageError)) parts.Add("ç”µå‹è½¨: " + sample.VoltageError);
+            if (!string.IsNullOrEmpty(sample.AdcError)) parts.Add("ADC: " + sample.AdcError);
+            if (!string.IsNullOrEmpty(sample.PowerTelemetryError)) parts.Add("åŠŸè€—é¥æµ‹: " + sample.PowerTelemetryError);
+            return string.Join("ï¼›", parts.ToArray());
+        }
+
+        private void RenderActivePage()
+        {
+            if (pageHost == null) return;
+            if (activePage == PageTuning) pageHost.Content = BuildTuningPage();
+            else if (activePage == PageVoltage) pageHost.Content = BuildVoltagePage();
+            else if (activePage == PagePower) pageHost.Content = BuildPowerPage();
+            else if (activePage == PageProfiles) pageHost.Content = BuildProfilesPage();
+            else if (activePage == PageInterfaces) pageHost.Content = BuildInterfacesPage();
+            else pageHost.Content = BuildOverviewPage();
+            ApplyLocalizationToTree(pageHost, true);
+        }
+
+        private UIElement BuildOverviewPage()
+        {
+            StackPanel page = PageStack();
+            if (snapshot == null)
+            {
+                page.Children.Add(EmptyState("ç­‰å¾…ç¬¬ä¸€æ¬¡ NVAPI é‡‡æ ·â€¦"));
+                return page;
+            }
+
+            page.Children.Add(BuildHomeHero());
+
+            UniformGrid primary = new UniformGrid { Columns = 4 };
+            primary.Children.Add(Metric("æ•´æ¿åŠŸè€—", PowerMonitorBoard(snapshot), "Power Monitor"));
+            primary.Children.Add(Metric("æ¸©åº¦", snapshot.TemperatureC.HasValue ? snapshot.TemperatureC.Value + " Â°C" : "â€”", "GPU thermal target"));
+            primary.Children.Add(Metric("æ ¸å¿ƒæ—¶é’Ÿ", Format(snapshot.CoreClockMHz, "MHz"), "å½“å‰ graphics domain"));
+            primary.Children.Add(Metric("P-State", snapshot.PState, "å½“å‰æ€§èƒ½çŠ¶æ€"));
+            page.Children.Add(primary);
+
+            page.Children.Add(SectionHeading("ç¡¬ä»¶èº«ä»½", "PCIã€æ€»çº¿ä¸æ¶æ„ä¿¡æ¯"));
+            UniformGrid identity = new UniformGrid { Columns = 4 };
+            identity.Children.Add(Metric("PCI Device", HexValue(snapshot.PciDeviceId), "Subsystem " + HexValue(snapshot.PciSubsystemId)));
+            identity.Children.Add(Metric("PCI ä½ç½®", "Bus " + OptionalUInt(snapshot.BusId), "Slot " + OptionalUInt(snapshot.BusSlotId)));
+            identity.Children.Add(Metric("GPU æ¶æ„", HexValue(snapshot.ArchitectureId), "Impl " + HexValue(snapshot.ArchitectureImplementationId) + " Â· Rev " + HexValue(snapshot.ArchitectureRevision)));
+            identity.Children.Add(Metric("ç‰©ç† framebuffer", snapshot.PhysicalFrameBufferKiB.HasValue ? (snapshot.PhysicalFrameBufferKiB.Value / 1024.0).ToString("0", CultureInfo.InvariantCulture) + " MiB" : "â€”", "NvAPI_GPU_GetPhysicalFrameBufferSize"));
+            page.Children.Add(identity);
+
+            page.Children.Add(SectionHeading("é¢‘ç‡ä¸æ˜¾å­˜", "é©±åŠ¨å®æ—¶å€¼ä¸å½“å‰åç§»"));
+            UniformGrid clocks = new UniformGrid { Columns = 4 };
+            clocks.Children.Add(Metric("æ˜¾å­˜æ—¶é’Ÿ", Format(snapshot.MemoryClockMHz, "MHz"), "memory domain"));
+            clocks.Children.Add(Metric("è§†é¢‘æ—¶é’Ÿ", Format(snapshot.VideoClockMHz, "MHz"), "video domain"));
+            clocks.Children.Add(Metric("æ ¸å¿ƒåç§»", TuningValue(snapshot.Tuning.CoreOffsetMHz, "MHz"), TuningRange(snapshot.Tuning.CoreMinimumMHz, snapshot.Tuning.CoreMaximumMHz, "MHz")));
+            clocks.Children.Add(Metric("æ˜¾å­˜åç§»", TuningValue(snapshot.Tuning.MemoryOffsetMHz, "MHz"), TuningRange(snapshot.Tuning.MemoryMinimumMHz, snapshot.Tuning.MemoryMaximumMHz, "MHz")));
+            clocks.Children.Add(Metric("Crossbar åç§»", XbarOffset(snapshot), XbarSummary(snapshot)));
+            clocks.Children.Add(Metric("SYS Clock åç§»", ClockDomainOffset(snapshot.SysClock), ClockDomainSummary(snapshot.SysClock, "SYS")));
+            clocks.Children.Add(Metric("Video Clock åç§»", ClockDomainOffset(snapshot.VideoClock), ClockDomainSummary(snapshot.VideoClock, "Video")));
+            clocks.Children.Add(Metric("é£æ‰‡æ§åˆ¶", snapshot.Fans.Count == 0 ? "â€”" : snapshot.Fans.Count + " è·¯", snapshot.FanControlError ?? "ClientFanCoolers"));
+            clocks.Children.Add(Metric("V/F æ›²çº¿", snapshot.VfPoints.Count == 0 ? "â€”" : snapshot.VfPoints.Count + " ç‚¹", VfSummary(snapshot)));
+            clocks.Children.Add(Metric("ä¸“ç”¨æ˜¾å­˜", Format(snapshot.DedicatedMemoryMiB, "MiB"), "ç‰©ç† framebuffer"));
+            clocks.Children.Add(Metric("å½“å‰å¯ç”¨", Format(snapshot.AvailableMemoryMiB, "MiB"), "å¯åˆ†é…æ˜¾å­˜"));
+            page.Children.Add(clocks);
+
+            page.Children.Add(SectionHeading("ç”µæ°”çŠ¶æ€", "Blackwell ç”µå‹è½¨å’Œé©±åŠ¨é™åˆ¶"));
+            UniformGrid electrical = new UniformGrid { Columns = 4 };
+            electrical.Children.Add(Metric("NVVDD æ„Ÿæµ‹", RailValue(snapshot, 0), RailSummary(snapshot, 0)));
+            electrical.Children.Add(Metric("MSVDD æ„Ÿæµ‹", RailValue(snapshot, 1), RailSummary(snapshot, 1)));
+            electrical.Children.Add(Metric("åŠŸè€—ä¸Šé™", TuningValue(snapshot.Tuning.PowerPercent, "%"), TuningRange(snapshot.Tuning.PowerMinimumPercent, snapshot.Tuning.PowerMaximumPercent, "%")));
+            electrical.Children.Add(Metric("Voltage Boost", snapshot.Voltage == null ? "â€”" : snapshot.Voltage.VoltageBoostPercent + "%", "VoltRails Control"));
+            electrical.Children.Add(Metric("Boost Lock", snapshot.Tuning.BoostLockEnabled.HasValue ? (snapshot.Tuning.BoostLockEnabled.Value ? "å·²å¼€å¯" : "å·²å…³é—­") : "â€”", "PerfClientLimits domain 6"));
+            electrical.Children.Add(Metric("é©±åŠ¨èŠ¯ç‰‡åŠŸè€—", TopologyPower(snapshot, true), "ClientPowerTopology ID 0"));
+            electrical.Children.Add(Metric("é©±åŠ¨æ•´æ¿åŠŸè€—", TopologyPower(snapshot, false), "ClientPowerTopology ID 1"));
+            electrical.Children.Add(Metric("ä¼šè¯èƒ½é‡", SessionEnergy(snapshot), "ç›¸å¯¹å¯åŠ¨æ—¶ç´¯è®¡"));
+            page.Children.Add(electrical);
+
+            if (snapshot.PowerTelemetry != null && snapshot.PowerTelemetry.InsufficientExternalPower == true)
+                page.Children.Add(Alert("æ£€æµ‹åˆ°å¤–æ¥ä¾›ç”µä¸è¶³", "GetPerfDecreaseInfo çš„ INSUFFICIENT_POWER ä½å·²ç½®ä½ã€‚", true));
+            return page;
+        }
+
+        private UIElement BuildHomeHero()
+        {
+            Grid hero = new Grid { Margin = new Thickness(0, 0, 0, 16) };
+            hero.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1.65, GridUnitType.Star) });
+            hero.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            Border identity = new Border
+            {
+                Background = PanelBrush,
+                BorderBrush = StrokeBrush,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(16),
+                Padding = new Thickness(22, 20, 22, 20),
+                Margin = new Thickness(0, 0, 8, 0)
+            };
+            StackPanel identityStack = new StackPanel();
+            StackPanel badges = new StackPanel { Orientation = Orientation.Horizontal };
+            badges.Children.Add(Pill("NV VOLTELLE", AccentDarkBrush, AccentBrush));
+            badges.Children.Add(Pill("LIVE Â· " + (snapshot.PState ?? "â€”"), Brush("#24213D"), SecondaryAccentBrush));
+            identityStack.Children.Add(badges);
+            identityStack.Children.Add(new TextBlock
+            {
+                Text = snapshot.Name,
+                Foreground = Brushes.White,
+                FontSize = 26,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 17, 0, 0),
+                TextTrimming = TextTrimming.CharacterEllipsis
+            });
+            identityStack.Children.Add(new TextBlock
+            {
+                Text = "é©±åŠ¨ " + snapshot.Driver + "  Â·  VBIOS " + snapshot.Vbios,
+                Foreground = MutedBrush,
+                FontSize = 11,
+                Margin = new Thickness(0, 7, 0, 0)
+            });
+            identityStack.Children.Add(new Border { Height = 1, Background = StrokeBrush, Margin = new Thickness(0, 18, 0, 14) });
+            Grid attribution = new Grid();
+            attribution.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            attribution.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            attribution.Children.Add(new TextBlock
+            {
+                Text = "åˆ¶ä½œè€…  " + VoltelleBrand.Maker + "   Â·   Bç«™ @" + VoltelleBrand.BilibiliId,
+                Foreground = Brush("#CDD5E2"),
+                FontSize = 11,
+                VerticalAlignment = VerticalAlignment.Center
+            });
+            Border freeBadge = Pill(VoltelleBrand.FreeNotice, Brush("#202D29"), AccentBrush);
+            Grid.SetColumn(freeBadge, 1);
+            attribution.Children.Add(freeBadge);
+            identityStack.Children.Add(attribution);
+            identity.Child = identityStack;
+            hero.Children.Add(identity);
+
+            Border risk = new Border
+            {
+                Background = Brush("#251A16"),
+                BorderBrush = Brush("#68432A"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(16),
+                Padding = new Thickness(20),
+                Margin = new Thickness(8, 0, 0, 0)
+            };
+            StackPanel riskStack = new StackPanel();
+            riskStack.Children.Add(new TextBlock { Text = "ä½¿ç”¨å‰è¯·ç¡®è®¤", Foreground = WarningBrush, FontSize = 10, FontWeight = FontWeights.SemiBold });
+            riskStack.Children.Add(new TextBlock
+            {
+                Text = VoltelleBrand.RiskNotice,
+                Foreground = Brushes.White,
+                FontSize = 20,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 10, 0, 0),
+                TextWrapping = TextWrapping.Wrap
+            });
+            riskStack.Children.Add(new TextBlock
+            {
+                Text = "å»ºè®®ä¸€æ¬¡åªè°ƒæ•´ä¸€ä¸ªå˜é‡ï¼Œå°æ­¥æ¨è¿›ï¼Œå¹¶åœ¨è´Ÿè½½ä¸‹å®Œæˆç¨³å®šæ€§éªŒè¯ã€‚å¸¸è§„è°ƒæ ¡ä¼šåœ¨åº”ç”¨å‰ç¡®è®¤ï¼›ä¸€é”®å¤ä½ç›´æ¥æ‰§è¡Œã€‚",
+                Foreground = Brush("#D2B69C"),
+                FontSize = 10,
+                Margin = new Thickness(0, 11, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                LineHeight = 17
+            });
+            riskStack.Children.Add(new TextBlock
+            {
+                Text = "å½“å‰éªŒè¯èŒƒå›´ï¼šä»…é™ GeForce RTX 5070 Ti åŠä»¥ä¸Šçš„æ¡Œé¢ç«¯ä¸ç§»åŠ¨ç«¯æ˜¾å¡ã€‚å…¶ä»–å‹å·å°šæœªéªŒè¯ã€‚",
+                Foreground = WarningBrush,
+                FontSize = 10,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 10, 0, 0),
+                TextWrapping = TextWrapping.Wrap,
+                LineHeight = 17
+            });
+            risk.Child = riskStack;
+            Grid.SetColumn(risk, 1);
+            hero.Children.Add(risk);
+            return hero;
+        }
+
+        private static Border Pill(string text, Brush background, Brush foreground)
+        {
+            Border pill = new Border
+            {
+                Background = background,
+                CornerRadius = new CornerRadius(10),
+                Padding = new Thickness(9, 4, 9, 4),
+                Margin = new Thickness(0, 0, 7, 0)
+            };
+            pill.Child = new TextBlock { Text = text, Foreground = foreground, FontSize = 9, FontWeight = FontWeights.SemiBold };
+            return pill;
+        }
+
+        private UIElement BuildTuningPage()
+        {
+            StackPanel page = PageStack();
+            bool writesEnabled = CanInitiateWrite;
+            page.Children.Add(Alert(
+                writesEnabled ? "åˆ†é¡¹å†™å…¥å¯ç”¨" : "å½“å‰è¿è¡Œä¿æŒåªè¯»",
+                writesEnabled
+                    ? "ç‚¹å‡»åº”ç”¨åä¼šå…ˆæ˜¾ç¤ºç¡®è®¤ã€‚æ ¸å¿ƒã€æ˜¾å­˜ã€åŠŸè€—å’Œ Boost Lock åˆ†åˆ«å†™å…¥å¹¶å›è¯»ï¼›æŸé¡¹å¤±è´¥ä¸ä¼šæ’¤é”€æˆåŠŸé¡¹ï¼Œä¹Ÿä¸ä¼šé˜»æ­¢åç»­é¡¹ç›®ã€‚"
+                    : "å½“å‰ä»…æ˜¾ç¤ºé©±åŠ¨è¯»æ•°ï¼Œåº”ç”¨æŒ‰é’®ä¸å¯ç”¨ï¼Œä¹Ÿä¸ä¼šè°ƒç”¨ SETã€‚",
+                !writesEnabled));
+            if (pendingProfile != null)
+            {
+                page.Children.Add(Alert(
+                    "å·²è½½å…¥é…ç½®æ¡£ç›®æ ‡ Â· " + pendingProfile.Name,
+                    "å·²å¯ç”¨çš„æ ¸å¿ƒã€æ˜¾å­˜å’ŒåŠŸè€—å­—æ®µä¼šæ˜¾ç¤ºä¸ºé…ç½®æ¡£ç›®æ ‡ï¼›Boost Lock ä¸å±äº mvolt.profile.v1ï¼Œç»§ç»­æ˜¾ç¤ºå½“å‰é©±åŠ¨å€¼ã€‚",
+                    false));
+            }
+            bool coreAvailable = snapshot != null && snapshot.Tuning.CoreOffsetMHz.HasValue && snapshot.Tuning.CoreMinimumMHz.HasValue && snapshot.Tuning.CoreMaximumMHz.HasValue;
+            bool memoryAvailable = snapshot != null && snapshot.Tuning.MemoryOffsetMHz.HasValue && snapshot.Tuning.MemoryMinimumMHz.HasValue && snapshot.Tuning.MemoryMaximumMHz.HasValue;
+            bool powerAvailable = snapshot != null && snapshot.Tuning.PowerPercent.HasValue && snapshot.Tuning.PowerMinimumPercent.HasValue && snapshot.Tuning.PowerMaximumPercent.HasValue;
+            bool boostAvailable = snapshot != null && snapshot.Tuning.BoostLockEnabled.HasValue;
+
+            Grid controls = new Grid { Margin = new Thickness(0, 14, 0, 0) };
+            controls.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            controls.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            controls.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            controls.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            int? coreTarget = snapshot == null ? null : snapshot.Tuning.CoreOffsetMHz;
+            int? memoryTarget = snapshot == null ? null : snapshot.Tuning.MemoryOffsetMHz;
+            int? powerTarget = snapshot == null ? null : snapshot.Tuning.PowerPercent;
+            if (pendingProfile != null)
+            {
+                if (pendingProfile.Controls.Core.Enabled) coreTarget = pendingProfile.Controls.Core.OffsetMHz;
+                if (pendingProfile.Controls.Memory.Enabled) memoryTarget = pendingProfile.Controls.Memory.OffsetMHz;
+                if (pendingProfile.Controls.Power.Enabled) powerTarget = pendingProfile.Controls.Power.Percent;
+            }
+            coreInput = NumericControl(controls, 0, 0, "æ ¸å¿ƒé¢‘ç‡åç§»", "MHz", coreTarget, snapshot == null ? null : snapshot.Tuning.CoreMinimumMHz, snapshot == null ? null : snapshot.Tuning.CoreMaximumMHz, coreAvailable);
+            memoryInput = NumericControl(controls, 1, 0, "æ˜¾å­˜é¢‘ç‡åç§»", "MHz", memoryTarget, snapshot == null ? null : snapshot.Tuning.MemoryMinimumMHz, snapshot == null ? null : snapshot.Tuning.MemoryMaximumMHz, memoryAvailable);
+            powerInput = NumericControl(controls, 0, 1, "åŠŸè€—ä¸Šé™", "%", powerTarget, snapshot == null ? null : snapshot.Tuning.PowerMinimumPercent, snapshot == null ? null : snapshot.Tuning.PowerMaximumPercent, powerAvailable);
+
+            Border boostCard = CardShell();
+            boostCard.Margin = new Thickness(7, 7, 0, 0);
+            StackPanel boostStack = new StackPanel();
+            boostStack.Children.Add(new TextBlock { Text = "Boost Lock", Foreground = MutedBrush, FontSize = 11 });
+            boostInput = new CheckBox
+            {
+                Content = "é”å®šæ‰‹åŠ¨ Boost ç”µå‹åŸŸ",
+                IsChecked = snapshot != null && snapshot.Tuning.BoostLockEnabled == true,
+                Foreground = Brushes.White,
+                Margin = new Thickness(0, 17, 0, 12),
+                FontSize = 13
+            };
+            boostStack.Children.Add(boostInput);
+            boostStack.Children.Add(new TextBlock
+            {
+                Text = "PerfClientLimits domain 6 ä½¿ç”¨ 1,500,000 ÂµV æ§åˆ¶å“¨å…µï¼›è¯¥æ•°å€¼ä¸æ˜¯å·¥ä½œç”µå‹ã€‚",
+                Foreground = Brush("#667891"),
+                FontSize = 10,
+                TextWrapping = TextWrapping.Wrap
+            });
+            boostCard.Child = boostStack;
+            ApplyUnavailableOverlay(boostCard, boostAvailable, "Boost Lock æ¥å£æˆ–çŠ¶æ€ä¸å¯ç”¨");
+            Grid.SetColumn(boostCard, 1);
+            Grid.SetRow(boostCard, 1);
+            controls.Children.Add(boostCard);
+            page.Children.Add(controls);
+
+            StackPanel actions = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 16, 0, 0) };
+            Button reset = SecondaryButton("æ¢å¤å½“å‰è¯»æ•°");
+            reset.Click += delegate { pendingProfile = null; RenderActivePage(); };
+            actions.Children.Add(reset);
+            applyTuningButton = PrimaryButton("åº”ç”¨å¹¶éªŒè¯");
+            applyTuningButton.Margin = new Thickness(10, 0, 0, 0);
+            applyTuningButton.IsEnabled = writesEnabled && coreAvailable && memoryAvailable && powerAvailable && boostAvailable;
+            applyTuningButton.Click += delegate { ApplyTuning(); };
+            actions.Children.Add(applyTuningButton);
+            page.Children.Add(actions);
+
+            page.Children.Add(SectionHeading("é«˜çº§åˆ†é¡¹å†™å…¥", "å¸¸è§„åº”ç”¨å…ˆç¡®è®¤ï¼›ä¸€é”®å¤ä½ç›´æ¥æ‰§è¡Œã€‚æ¯é¡¹å†™å…¥åç‹¬ç«‹å›è¯»ï¼Œå¤±è´¥ä¸å›é€€æˆåŠŸé¡¹"));
+            UniformGrid pending = new UniformGrid { Columns = 3 };
+            pending.Children.Add(Metric("Voltage Boost", snapshot == null || snapshot.Voltage == null ? "â€”" : snapshot.Voltage.VoltageBoostPercent + "%", "ç›®æ ‡èŒƒå›´ 0..100% Â· å†™åå›è¯»"));
+            pending.Children.Add(Metric("Crossbar", snapshot == null ? "â€”" : XbarOffset(snapshot), "ç‹¬ç«‹ ClockDomains æ§åˆ¶ä¸å›è¯»éªŒè¯"));
+            pending.Children.Add(Metric("V/F ç‚¹æ§åˆ¶", snapshot == null ? "â€”" : snapshot.VfPoints.Count + " ç‚¹", "å• bit mask Â· é€ç‚¹å†™å…¥ Â· å¤±è´¥ç»§ç»­"));
+            page.Children.Add(pending);
+            return page;
+        }
+
+        private TextBox NumericControl(Grid parent, int column, int row, string label, string unit, int? value, int? minimum, int? maximum, bool available)
+        {
+            Border card = CardShell();
+            card.Margin = new Thickness(column == 0 ? 0 : 7, row == 0 ? 0 : 7, column == 0 ? 7 : 0, row == 0 ? 7 : 0);
+            StackPanel stack = new StackPanel();
+            stack.Children.Add(new TextBlock { Text = label, Foreground = MutedBrush, FontSize = 11 });
+            Grid line = new Grid { Margin = new Thickness(0, 13, 0, 9) };
+            line.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            line.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            TextBox input = new TextBox
+            {
+                Text = value.HasValue ? value.Value.ToString(CultureInfo.InvariantCulture) : string.Empty,
+                Background = Brush("#0C131E"),
+                Foreground = Brushes.White,
+                BorderBrush = StrokeBrush,
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(10, 7, 10, 7),
+                FontSize = 15,
+                CaretBrush = AccentBrush
+            };
+            line.Children.Add(input);
+            TextBlock suffix = new TextBlock { Text = unit, Foreground = MutedBrush, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(10, 0, 0, 0) };
+            Grid.SetColumn(suffix, 1);
+            line.Children.Add(suffix);
+            stack.Children.Add(line);
+            AddIntegerSlider(stack, input, minimum, maximum, 1);
+            stack.Children.Add(new TextBlock
+            {
+                Text = minimum.HasValue && maximum.HasValue ? "é©±åŠ¨èŒƒå›´ " + minimum.Value + ".." + maximum.Value + " " + unit : "é©±åŠ¨èŒƒå›´ä¸å¯ç”¨",
+                Foreground = Brush("#667891"),
+                FontSize = 10
+            });
+            card.Child = stack;
+            ApplyUnavailableOverlay(card, available, label + " æ¥å£ã€çŠ¶æ€æˆ–èŒƒå›´ä¸å¯ç”¨");
+            Grid.SetColumn(card, column);
+            Grid.SetRow(card, row);
+            parent.Children.Add(card);
+            return input;
+        }
+
+        private void ApplyTuning()
+        {
+            if (tuningCoordinator == null || applyTuningButton == null) return;
+            int core;
+            int memory;
+            int power;
+            if (!Int32.TryParse(coreInput.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out core) ||
+                !Int32.TryParse(memoryInput.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out memory) ||
+                !Int32.TryParse(powerInput.Text, NumberStyles.Integer, CultureInfo.InvariantCulture, out power))
+            {
+                statusText.Text = "è¯·è¾“å…¥æœ‰æ•ˆçš„æ•´æ•°è°ƒæ ¡å€¼ã€‚";
+                statusText.Foreground = ErrorBrush;
+                return;
+            }
+
+            TuningRequest request = new TuningRequest
+            {
+                CoreOffsetMHz = core,
+                MemoryOffsetMHz = memory,
+                PowerPercent = power,
+                BoostLockEnabled = boostInput.IsChecked == true
+            };
+            string target = "æ ¸å¿ƒ " + core + " MHz Â· æ˜¾å­˜ " + memory + " MHz Â· åŠŸè€— " + power + "% Â· Boost Lock " + (request.BoostLockEnabled ? "å¼€å¯" : "å…³é—­");
+            ExecuteConfirmedBestEffortWrite(target, delegate { return tuningCoordinator.ApplyVerified(request); });
+        }
+
+        private UIElement BuildVoltagePage()
+        {
+            StackPanel page = PageStack();
+            if (snapshot == null)
+            {
+                page.Children.Add(EmptyState("ç­‰å¾…ç”µå‹è½¨å’Œæ›²çº¿é‡‡æ ·â€¦"));
+                return page;
+            }
+
+            InitializeVoltageDrafts();
+            bool writesEnabled = CanInitiateWrite;
+            if (pendingProfile != null)
+            {
+                page.Children.Add(Alert(
+                    "å·²è½½å…¥é…ç½®æ¡£ç›®æ ‡ Â· " + pendingProfile.Name,
+                    "ä¸‹åˆ—è¾“å…¥æ¡†å·²é‡‡ç”¨é…ç½®æ¡£å€¼ï¼›V/F åªæŠŠä¸å½“å‰æ›²çº¿ä¸åŒçš„ç‚¹åŠ å…¥æš‚å­˜ã€‚æ­¤é¡µé¢ä¸ä¼šè‡ªåŠ¨æ‰§è¡Œç¡¬ä»¶å†™å…¥ã€‚",
+                    false));
+            }
+
+            page.Children.Add(SectionHeading("Blackwell ç”µå‹è½¨", "Status å­—æ®µä¸ Control offset åˆ†å¼€æ˜¾ç¤º"));
+            UniformGrid rails = new UniformGrid { Columns = 2 };
+            if (snapshot.Voltage != null)
+            {
+                for (int index = 0; index < snapshot.Voltage.Rails.Count; index++)
+                    rails.Children.Add(VoltageRailCard(snapshot.Voltage.Rails[index]));
+            }
+            if (rails.Children.Count == 0)
+                rails.Children.Add(WrapAvailability(
+                    EmptyState("é©±åŠ¨æœªè¿”å› VoltVoltRails v2 æ•°æ®ã€‚"),
+                    false,
+                    string.IsNullOrEmpty(snapshot.VoltageError) ? "VoltVoltRails æ¥å£ä¸å¯ç”¨" : snapshot.VoltageError));
+            page.Children.Add(rails);
+
+            page.Children.Add(SectionHeading("ç”µå‹è½¨ä¸ Crossbar ç›®æ ‡", "è¾“å…¥åªåœ¨ç‚¹å‡»åº”ç”¨åå†™å…¥ï¼›æ¯æ¬¡åº”ç”¨å‰å‡éœ€å•ç‹¬ç¡®è®¤"));
+            CheckBox xocToggle = new CheckBox
+            {
+                Content = "å¯ç”¨ XOC ç”µå‹èŒƒå›´ï¼ˆæœ€é«˜ 1.25 Vï¼‰",
+                IsChecked = xocEnabled,
+                Foreground = Brushes.White,
+                FontSize = 11,
+                Margin = new Thickness(0, 2, 0, 10)
+            };
+            xocToggle.Click += delegate
+            {
+                bool requested = xocToggle.IsChecked == true;
+                if (requested && MessageBox.Show(
+                        VoltelleLocalization.T("XOC æ¨¡å¼ä¼šæŠŠé…ç½®æ¡£å’Œç”µå‹ç›®æ ‡çš„ä¸Šé™ä» 1.15 V æé«˜åˆ° 1.25 Vã€‚å½“å‰æ„å»ºä»ä¸ä¼šå†™å…¥æ˜¾å¡ï¼Œä½†æœªæ¥åº”ç”¨è¯¥é…ç½®å¯èƒ½å¢åŠ ç¡¬ä»¶é£é™©ã€‚æ˜¯å¦ä¿ç•™æ­¤é€‰æ‹©ï¼Ÿ"),
+                        VoltelleLocalization.T("ç¡®è®¤ XOC èŒƒå›´"),
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Warning,
+                        MessageBoxResult.No) != MessageBoxResult.Yes)
+                {
+                    xocToggle.IsChecked = false;
+                    requested = false;
+                }
+                xocEnabled = requested;
+                statusText.Text = xocEnabled ? "å·²ä¸ºå½“å‰è‰ç¨¿å¯ç”¨ XOC 1.25 V èŒƒå›´ï¼›å°šæœªæ‰§è¡Œç¡¬ä»¶å†™å…¥ã€‚" : "å½“å‰è‰ç¨¿ä½¿ç”¨æ ‡å‡† 1.15 V èŒƒå›´ã€‚";
+                statusText.Foreground = xocEnabled ? WarningBrush : AccentBrush;
+            };
+            page.Children.Add(xocToggle);
+            if (snapshot.MobileRelOnlyCompatible)
+            {
+                page.Children.Add(Alert(
+                    "REL-only ç”µå‹è·¯å¾„",
+                    "GPU åç§°åŒ¹é… Blackwell REL-only å…¼å®¹è§„åˆ™ï¼›ä¿å­˜çš„é…ç½®æ¡£ä¼šè®°å½• mobile_rel_only=trueã€‚",
+                    false));
+            }
+            UniformGrid voltageTargets = new UniformGrid { Columns = 2 };
+            VoltageRailContract nvvdd = snapshot.Voltage == null ? null : snapshot.Voltage.FindRail(0);
+            VoltageRailContract msvdd = snapshot.Voltage == null ? null : snapshot.Voltage.FindRail(1);
+            voltageTargets.Children.Add(BuildRailTargetCard(
+                "NVVDD èŒƒå›´", 0, nvvdd, nvvddMinimumDraft, nvvddMaximumDraft,
+                delegate(string value) { nvvddMinimumDraft = value; },
+                delegate(string value) { nvvddMaximumDraft = value; },
+                writesEnabled));
+            voltageTargets.Children.Add(BuildRailTargetCard(
+                "MSVDD èŒƒå›´", 1, msvdd, msvddMinimumDraft, msvddMaximumDraft,
+                delegate(string value) { msvddMinimumDraft = value; },
+                delegate(string value) { msvddMaximumDraft = value; },
+                writesEnabled));
+            voltageTargets.Children.Add(BuildSingleTargetCard(
+                "Voltage Boost", "0..100%ï¼Œä½¿ç”¨ VoltRails Control boost byte", "%", voltageBoostDraft,
+                delegate(string value) { voltageBoostDraft = value; },
+                0, 100, 1,
+                snapshot.Voltage != null && string.IsNullOrEmpty(snapshot.VoltageError),
+                writesEnabled && snapshot.Voltage != null,
+                delegate { ApplyVoltageBoostTarget(); }));
+            voltageTargets.Children.Add(BuildSingleTargetCard(
+                "Crossbar åç§»", XbarSummary(snapshot), "MHz", xbarOffsetDraft,
+                delegate(string value) { xbarOffsetDraft = value; },
+                snapshot.Xbar.MinimumOffsetMHz, snapshot.Xbar.MaximumOffsetMHz, 1,
+                snapshot.Xbar.CurrentOffsetKHz.HasValue && string.IsNullOrEmpty(snapshot.Xbar.Error),
+                writesEnabled && snapshot.Xbar.CurrentOffsetKHz.HasValue,
+                delegate { ApplyXbarTarget(); }));
+            voltageTargets.Children.Add(BuildSingleTargetCard(
+                "SYS Clock åç§»", ClockDomainSummary(snapshot.SysClock, "SYS"), "MHz", sysClockOffsetDraft,
+                delegate(string value) { sysClockOffsetDraft = value; },
+                snapshot.SysClock.MinimumOffsetMHz, snapshot.SysClock.MaximumOffsetMHz, 1,
+                snapshot.SysClock.CurrentOffsetKHz.HasValue && string.IsNullOrEmpty(snapshot.SysClock.Error),
+                writesEnabled && snapshot.SysClock.CurrentOffsetKHz.HasValue,
+                delegate { ApplyClockDomainTarget(snapshot.SysClock, NvApiXbarLayouts.Sys, sysClockOffsetDraft); }));
+            voltageTargets.Children.Add(BuildSingleTargetCard(
+                "Video Clock åç§»", ClockDomainSummary(snapshot.VideoClock, "Video"), "MHz", videoClockOffsetDraft,
+                delegate(string value) { videoClockOffsetDraft = value; },
+                snapshot.VideoClock.MinimumOffsetMHz, snapshot.VideoClock.MaximumOffsetMHz, 1,
+                snapshot.VideoClock.CurrentOffsetKHz.HasValue && string.IsNullOrEmpty(snapshot.VideoClock.Error),
+                writesEnabled && snapshot.VideoClock.CurrentOffsetKHz.HasValue,
+                delegate { ApplyClockDomainTarget(snapshot.VideoClock, NvApiXbarLayouts.Video, videoClockOffsetDraft); }));
+            page.Children.Add(voltageTargets);
+
+            page.Children.Add(SectionHeading("æ˜¾å¡é£æ‰‡æ§åˆ¶", "æ¯ä¸ª cooler ç‹¬ç«‹åˆ‡æ¢è‡ªåŠ¨/æ‰‹åŠ¨ï¼›æ‰‹åŠ¨ duty å†™å…¥åç«‹å³å›è¯»"));
+            UniformGrid fanTargets = new UniformGrid { Columns = 2 };
+            for (int fanIndex = 0; fanIndex < snapshot.Fans.Count; fanIndex++)
+                fanTargets.Children.Add(BuildFanTargetCard(snapshot.Fans[fanIndex], writesEnabled));
+            if (fanTargets.Children.Count == 0)
+                fanTargets.Children.Add(WrapAvailability(
+                    EmptyState("é©±åŠ¨æœªè¿”å› ClientFanCoolers æ§åˆ¶é€šé“ã€‚"),
+                    false,
+                    string.IsNullOrEmpty(snapshot.FanControlError) ? "ClientFanCoolers æ¥å£ä¸å¯ç”¨" : snapshot.FanControlError));
+            page.Children.Add(fanTargets);
+
+            page.Children.Add(SectionHeading("RTX 50 V/F æ›²çº¿ç¼–è¾‘å™¨", "å•ç‚¹ maskã€åŒºåŸŸ offsetã€é”šç‚¹æ‹‰å¹³å’Œé€ç‚¹å¤±è´¥ç»§ç»­"));
+            UIElement vfEditor = BuildVfEditor(writesEnabled);
+            page.Children.Add(WrapAvailability(vfEditor, snapshot.VfPoints.Count != 0 && string.IsNullOrEmpty(snapshot.VfError), "V/F æ¥å£ã€ç‚¹è¡¨æˆ–èŒƒå›´ä¸å¯ç”¨"));
+
+            Border chartCard = CardShell();
+            StackPanel chartStack = new StackPanel();
+            vfChartSummaryText = new TextBlock
+            {
+                Text = snapshot.VfPoints.Count == 0
+                    ? "æ›²çº¿ä¸å¯ç”¨"
+                    : snapshot.VfPoints.Count + " ä¸ªæœ‰æ•ˆç‚¹ Â· " + stagedVfChanges.Count + " ä¸ªæš‚å­˜å˜æ›´ Â· " + VfSummary(snapshot),
+                Foreground = MutedBrush,
+                FontSize = 11,
+                Margin = new Thickness(0, 0, 0, 12)
+            };
+            chartStack.Children.Add(vfChartSummaryText);
+            chartStack.Children.Add(new TextBlock
+            {
+                Text = "å³é”®æ‹–æ¡†å¤šé€‰ï¼›å·¦é”®æ‹–åŠ¨ä»»ä¸€å·²é€‰ç‚¹å¯æ•´ç»„ä¸Šä¸‹å¹³ç§»ã€‚å·¦å³é”®å•é€‰ï¼Œä¸Šä¸‹é”® Â±1 MHzï¼ŒShift+ä¸Šä¸‹ Â±15 MHzã€‚æ‰€æœ‰æ”¹åŠ¨ä»…è¿›å…¥æš‚å­˜ã€‚",
+                Foreground = Brush("#718198"),
+                FontSize = 10,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 10)
+            });
+            chartStack.Children.Add(BuildVfChart(snapshot.VfPoints, stagedVfChanges, TargetCoreOffsetMHz()));
+            chartCard.Child = chartStack;
+            page.Children.Add(chartCard);
+
+            page.Children.Add(SectionHeading("ADC æ ¡æ­£ç”µå‹", "raw code æ— æ•ˆæ—¶ä»ä¿ç•™é©±åŠ¨ç»™å‡ºçš„ corrected ÂµV"));
+            UniformGrid adcGrid = new UniformGrid { Columns = 4 };
+            if (snapshot.Adc != null)
+            {
+                for (int index = 0; index < snapshot.Adc.Devices.Count; index++)
+                {
+                    AdcDeviceContract adc = snapshot.Adc.Devices[index];
+                    adcGrid.Children.Add(Metric(
+                        adc.DomainName == "XBAR" ? "Crossbar" : adc.DomainName,
+                        (adc.CorrectedVoltageUv / 1000.0).ToString("N2", CultureInfo.InvariantCulture) + " mV",
+                        "device " + adc.DeviceIndex + " Â· fuse " + adc.FuseOffset + "/" + adc.FuseGain));
+                }
+            }
+            page.Children.Add(adcGrid);
+            return page;
+        }
+
+        private void InitializeVoltageDrafts()
+        {
+            if (voltageDraftInitialized || snapshot == null) return;
+            stagedVfChanges.Clear();
+
+            VoltageRailContract nvvdd = snapshot.Voltage == null ? null : snapshot.Voltage.FindRail(0);
+            VoltageRailContract msvdd = snapshot.Voltage == null ? null : snapshot.Voltage.FindRail(1);
+            nvvddMinimumDraft = RailMillivolts(nvvdd == null ? (uint?)null : nvvdd.MinimumLimitUv);
+            nvvddMaximumDraft = RailMillivolts(nvvdd == null ? (uint?)null : nvvdd.MaximumLimitUv);
+            msvddMinimumDraft = RailMillivolts(msvdd == null ? (uint?)null : msvdd.MinimumLimitUv);
+            msvddMaximumDraft = RailMillivolts(msvdd == null ? (uint?)null : msvdd.MaximumLimitUv);
+            voltageBoostDraft = snapshot.Voltage == null
+                ? string.Empty
+                : snapshot.Voltage.VoltageBoostPercent.ToString(CultureInfo.InvariantCulture);
+            xbarOffsetDraft = snapshot.Xbar.CurrentOffsetKHz.HasValue
+                ? (snapshot.Xbar.CurrentOffsetKHz.Value / 1000).ToString(CultureInfo.InvariantCulture)
+                : string.Empty;
+            sysClockOffsetDraft = snapshot.SysClock.CurrentOffsetKHz.HasValue
+                ? (snapshot.SysClock.CurrentOffsetKHz.Value / 1000).ToString(CultureInfo.InvariantCulture)
+                : string.Empty;
+            videoClockOffsetDraft = snapshot.VideoClock.CurrentOffsetKHz.HasValue
+                ? (snapshot.VideoClock.CurrentOffsetKHz.Value / 1000).ToString(CultureInfo.InvariantCulture)
+                : string.Empty;
+            fanDutyDrafts.Clear();
+            fanManualDrafts.Clear();
+            for (int fanIndex = 0; fanIndex < snapshot.Fans.Count; fanIndex++)
+            {
+                FanSnapshot fan = snapshot.Fans[fanIndex];
+                fanDutyDrafts[fan.CoolerId] = fan.CurrentDutyPercent.ToString(CultureInfo.InvariantCulture);
+                fanManualDrafts[fan.CoolerId] = fan.Manual;
+            }
+
+            if (snapshot.VfPoints.Count != 0)
+            {
+                VfPointSnapshot first = snapshot.VfPoints[0];
+                VfPointSnapshot last = snapshot.VfPoints[snapshot.VfPoints.Count - 1];
+                vfPointDraft = first.Index.ToString(CultureInfo.InvariantCulture);
+                vfSelectedPointIndex = first.Index;
+                vfSelectedPointIndices.Clear();
+                vfSelectedPointIndices.Add(first.Index);
+                vfTargetDraft = Math.Round((first.BaseFrequencyKHz + first.FrequencyOffsetKHz) / 1000.0).ToString(CultureInfo.InvariantCulture);
+                vfRegionStartDraft = first.Index.ToString(CultureInfo.InvariantCulture);
+                vfRegionEndDraft = last.Index.ToString(CultureInfo.InvariantCulture);
+                vfRegionOffsetDraft = "0";
+            }
+
+            MVoltProfile profile = pendingProfile;
+            if (profile != null)
+            {
+                xocEnabled = profile.Xoc;
+                if (profile.Controls.Nvvdd.Enabled)
+                {
+                    nvvddMinimumDraft = profile.Controls.Nvvdd.MinimumMv.ToString(CultureInfo.InvariantCulture);
+                    nvvddMaximumDraft = profile.Controls.Nvvdd.MaximumMv.ToString(CultureInfo.InvariantCulture);
+                }
+                if (profile.Controls.Msvdd.Enabled)
+                {
+                    msvddMinimumDraft = profile.Controls.Msvdd.MinimumMv.ToString(CultureInfo.InvariantCulture);
+                    msvddMaximumDraft = profile.Controls.Msvdd.MaximumMv.ToString(CultureInfo.InvariantCulture);
+                }
+                if (profile.Controls.VoltageBoost.Enabled)
+                    voltageBoostDraft = profile.Controls.VoltageBoost.Percent.ToString(CultureInfo.InvariantCulture);
+                if (profile.Controls.Xbar.Enabled)
+                    xbarOffsetDraft = profile.Controls.Xbar.OffsetMHz.ToString(CultureInfo.InvariantCulture);
+                if (profile.Controls.SysClock.Enabled)
+                    sysClockOffsetDraft = profile.Controls.SysClock.OffsetMHz.ToString(CultureInfo.InvariantCulture);
+                if (profile.Controls.VideoClock.Enabled)
+                    videoClockOffsetDraft = profile.Controls.VideoClock.OffsetMHz.ToString(CultureInfo.InvariantCulture);
+                for (int fanIndex = 0; fanIndex < profile.Controls.Fans.Count; fanIndex++)
+                {
+                    ProfileFanControl fan = profile.Controls.Fans[fanIndex];
+                    if (!fan.Enabled) continue;
+                    fanDutyDrafts[fan.CoolerId] = fan.DutyPercent.ToString(CultureInfo.InvariantCulture);
+                    fanManualDrafts[fan.CoolerId] = fan.Manual;
+                }
+                if (profile.VfCurveOffsetsKHz.Count == snapshot.VfPoints.Count)
+                {
+                    for (int index = 0; index < snapshot.VfPoints.Count; index++)
+                    {
+                        if (profile.VfCurveOffsetsKHz[index] == snapshot.VfPoints[index].FrequencyOffsetKHz) continue;
+                        stagedVfChanges.Add(new VfOffsetChange
+                        {
+                            Index = snapshot.VfPoints[index].Index,
+                            FrequencyOffsetKHz = profile.VfCurveOffsetsKHz[index]
+                        });
+                    }
+                }
+            }
+            voltageDraftInitialized = true;
+        }
+
+        private static string RailMillivolts(uint? valueUv)
+        {
+            return valueUv.HasValue ? (valueUv.Value / 1000U).ToString(CultureInfo.InvariantCulture) : string.Empty;
+        }
+
+        private UIElement BuildRailTargetCard(
+            string title,
+            int railIndex,
+            VoltageRailContract rail,
+            string minimumDraft,
+            string maximumDraft,
+            Action<string> minimumChanged,
+            Action<string> maximumChanged,
+            bool writesEnabled)
+        {
+            Border card = CardShell();
+            StackPanel stack = new StackPanel();
+            stack.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.SemiBold });
+            Grid fields = new Grid { Margin = new Thickness(0, 12, 0, 9) };
+            fields.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            fields.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            int maximumMillivolts = xocEnabled ? 1250 : 1150;
+            UIElement minimum = BuildVoltageField("MIN", "mV", minimumDraft, minimumChanged, 250, maximumMillivolts, 5);
+            UIElement maximum = BuildVoltageField("MAX", "mV", maximumDraft, maximumChanged, 250, maximumMillivolts, 5);
+            fields.Children.Add(minimum);
+            Grid.SetColumn(maximum, 1);
+            fields.Children.Add(maximum);
+            stack.Children.Add(fields);
+            stack.Children.Add(new TextBlock
+            {
+                Text = rail == null
+                    ? "å½“å‰ç”µå‹è½¨ä¸å¯ç”¨"
+                    : "å½“å‰ " + (rail.MinimumLimitUv / 1000U) + ".." + (rail.MaximumLimitUv / 1000U) + " mV Â· 5 mV æ­¥è¿›",
+                Foreground = Brush("#667891"),
+                FontSize = 10
+            });
+            Button apply = PrimaryButton("åº”ç”¨å¹¶å›è¯»");
+            apply.HorizontalAlignment = HorizontalAlignment.Right;
+            apply.Margin = new Thickness(0, 12, 0, 0);
+            apply.IsEnabled = writesEnabled && rail != null;
+            apply.Click += delegate { ApplyVoltageRailTarget(railIndex); };
+            stack.Children.Add(apply);
+            card.Child = stack;
+            return WrapAvailability(card, rail != null, title + " æ¥å£ã€çŠ¶æ€æˆ–èŒƒå›´ä¸å¯ç”¨");
+        }
+
+        private UIElement BuildSingleTargetCard(
+            string title,
+            string hint,
+            string unit,
+            string value,
+            Action<string> changed,
+            int? minimum,
+            int? maximum,
+            int tick,
+            bool available,
+            bool canApply,
+            Action applyAction)
+        {
+            Border card = CardShell();
+            StackPanel stack = new StackPanel();
+            stack.Children.Add(new TextBlock { Text = title, FontSize = 14, FontWeight = FontWeights.SemiBold });
+            stack.Children.Add(BuildVoltageField("ç›®æ ‡", unit, value, changed, minimum, maximum, tick));
+            stack.Children.Add(new TextBlock { Text = hint, Foreground = Brush("#667891"), FontSize = 10, TextWrapping = TextWrapping.Wrap });
+            Button apply = PrimaryButton("åº”ç”¨å¹¶å›è¯»");
+            apply.HorizontalAlignment = HorizontalAlignment.Right;
+            apply.Margin = new Thickness(0, 12, 0, 0);
+            apply.IsEnabled = canApply;
+            apply.Click += delegate { applyAction(); };
+            stack.Children.Add(apply);
+            card.Child = stack;
+            return WrapAvailability(card, available, title + " æ¥å£ã€çŠ¶æ€æˆ–èŒƒå›´ä¸å¯ç”¨");
+        }
+
+        private UIElement BuildFanTargetCard(FanSnapshot fan, bool writesEnabled)
+        {
+            Border card = CardShell();
+            StackPanel stack = new StackPanel();
+            stack.Children.Add(new TextBlock
+            {
+                Text = "Fan " + fan.CoolerId,
+                FontSize = 14,
+                FontWeight = FontWeights.SemiBold
+            });
+            bool manual;
+            if (!fanManualDrafts.TryGetValue(fan.CoolerId, out manual)) manual = fan.Manual;
+            CheckBox mode = new CheckBox
+            {
+                Content = "æ‰‹åŠ¨æ§åˆ¶",
+                IsChecked = manual,
+                Foreground = Brushes.White,
+                Margin = new Thickness(0, 10, 0, 2)
+            };
+            mode.Click += delegate { fanManualDrafts[fan.CoolerId] = mode.IsChecked == true; };
+            stack.Children.Add(mode);
+            string draft;
+            if (!fanDutyDrafts.TryGetValue(fan.CoolerId, out draft))
+                draft = fan.CurrentDutyPercent.ToString(CultureInfo.InvariantCulture);
+            int minimum = checked((int)fan.MinimumDutyPercent);
+            int maximum = checked((int)fan.MaximumDutyPercent);
+            stack.Children.Add(BuildVoltageField(
+                "ç›®æ ‡ duty",
+                "%",
+                draft,
+                delegate(string value) { fanDutyDrafts[fan.CoolerId] = value; },
+                minimum,
+                maximum,
+                1));
+            stack.Children.Add(new TextBlock
+            {
+                Text = "å½“å‰ " + fan.CurrentDutyPercent +
+                    "% Â· " + fan.CurrentRpm + " RPM Â· ä¸Šé™ " + fan.MaximumRpm + " RPM Â· " +
+                    (fan.Manual ? "Manual" : "Auto"),
+                Foreground = Brush("#667891"),
+                FontSize = 10,
+                TextWrapping = TextWrapping.Wrap
+            });
+            Button apply = PrimaryButton("åº”ç”¨å¹¶å›è¯»");
+            apply.HorizontalAlignment = HorizontalAlignment.Right;
+            apply.Margin = new Thickness(0, 12, 0, 0);
+            apply.IsEnabled = writesEnabled;
+            apply.Click += delegate { ApplyFanTarget(fan); };
+            stack.Children.Add(apply);
+            card.Child = stack;
+            return card;
+        }
+
+        private UIElement BuildVfEditor(bool writesEnabled)
+        {
+            Grid editors = new Grid { Margin = new Thickness(0, 0, 0, 2) };
+            editors.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            int? firstPointIndex = snapshot.VfPoints.Count == 0 ? (int?)null : snapshot.VfPoints[0].Index;
+            int? lastPointIndex = snapshot.VfPoints.Count == 0 ? (int?)null : snapshot.VfPoints[snapshot.VfPoints.Count - 1].Index;
+            editors.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            editors.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            Border pointCard = CardShell();
+            StackPanel point = new StackPanel();
+            point.Children.Add(new TextBlock { Text = "å•ç‚¹ä¸æ‹‰å¹³", FontSize = 14, FontWeight = FontWeights.SemiBold });
+            Grid pointFields = new Grid { Margin = new Thickness(0, 11, 0, 8) };
+            pointFields.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            pointFields.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            UIElement pointIndexField = BuildVoltageField("ç‚¹ç´¢å¼•", "", vfPointDraft, delegate(string value) { vfPointDraft = value; }, firstPointIndex, lastPointIndex, 1);
+            vfPointIndexInput = VoltageFieldTextBox(pointIndexField);
+            pointFields.Children.Add(pointIndexField);
+            UIElement targetField = BuildVoltageField("ç›®æ ‡é¢‘ç‡", "MHz", vfTargetDraft, delegate(string value) { vfTargetDraft = value; }, 1, 6000, 1);
+            vfTargetFrequencyInput = VoltageFieldTextBox(targetField);
+            Grid.SetColumn(targetField, 1);
+            pointFields.Children.Add(targetField);
+            point.Children.Add(pointFields);
+            WrapPanel pointActions = new WrapPanel();
+            Button stagePoint = SecondaryButton("æš‚å­˜ç‚¹ç›®æ ‡");
+            stagePoint.Margin = new Thickness(0, 0, 8, 8);
+            stagePoint.IsEnabled = snapshot.VfPoints.Count != 0;
+            stagePoint.Click += delegate { StageVfPointTarget(); };
+            pointActions.Children.Add(stagePoint);
+            Button flatten = SecondaryButton("ä»è¯¥ç‚¹å‘ä¸Šæ‹‰å¹³");
+            flatten.Margin = new Thickness(0, 0, 8, 8);
+            flatten.IsEnabled = snapshot.VfPoints.Count != 0;
+            flatten.Click += delegate { StageVfFlatten(); };
+            pointActions.Children.Add(flatten);
+            point.Children.Add(pointActions);
+            pointCard.Child = point;
+            editors.Children.Add(pointCard);
+
+            Border regionCard = CardShell();
+            StackPanel region = new StackPanel();
+            region.Children.Add(new TextBlock { Text = "åŒºåŸŸ offset", FontSize = 14, FontWeight = FontWeights.SemiBold });
+            Grid regionFields = new Grid { Margin = new Thickness(0, 11, 0, 8) };
+            for (int column = 0; column < 3; column++) regionFields.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            regionFields.Children.Add(BuildVoltageField("èµ·ç‚¹", "", vfRegionStartDraft, delegate(string value) { vfRegionStartDraft = value; }, firstPointIndex, lastPointIndex, 1));
+            UIElement endField = BuildVoltageField("ç»ˆç‚¹", "", vfRegionEndDraft, delegate(string value) { vfRegionEndDraft = value; }, firstPointIndex, lastPointIndex, 1);
+            Grid.SetColumn(endField, 1);
+            regionFields.Children.Add(endField);
+            UIElement offsetField = BuildVoltageField("offset", "MHz", vfRegionOffsetDraft, delegate(string value) { vfRegionOffsetDraft = value; }, -1000, 1000, 1);
+            Grid.SetColumn(offsetField, 2);
+            regionFields.Children.Add(offsetField);
+            region.Children.Add(regionFields);
+            Button stageRegion = SecondaryButton("æš‚å­˜åŒºåŸŸ");
+            stageRegion.HorizontalAlignment = HorizontalAlignment.Left;
+            stageRegion.IsEnabled = snapshot.VfPoints.Count != 0;
+            stageRegion.Click += delegate { StageVfRegion(); };
+            region.Children.Add(stageRegion);
+            regionCard.Child = region;
+            Grid.SetColumn(regionCard, 1);
+            editors.Children.Add(regionCard);
+
+            Border actionCard = CardShell();
+            actionCard.Margin = new Thickness(0, 0, 0, 10);
+            StackPanel action = new StackPanel();
+            action.Children.Add(new TextBlock { Text = "æš‚å­˜ä¿®æ”¹", FontSize = 14, FontWeight = FontWeights.SemiBold });
+            vfStagedCountText = new TextBlock
+            {
+                Text = stagedVfChanges.Count + " ä¸ªç‚¹å¾…åº”ç”¨",
+                Foreground = stagedVfChanges.Count == 0 ? MutedBrush : WarningBrush,
+                FontSize = 20,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 12, 0, 5)
+            };
+            action.Children.Add(vfStagedCountText);
+            action.Children.Add(new TextBlock
+            {
+                Text = "æš‚å­˜ä»…ä¿®æ”¹é¢„è§ˆã€‚çœŸå® SET æŒ‰å•ç‚¹å‘é€ï¼›æŸç‚¹å¤±è´¥åç»§ç»­å¤„ç†å‰©ä½™ç‚¹ï¼ŒæˆåŠŸç‚¹ä¿æŒç”Ÿæ•ˆã€‚",
+                Foreground = Brush("#667891"),
+                FontSize = 10,
+                TextWrapping = TextWrapping.Wrap
+            });
+            WrapPanel actions = new WrapPanel { Margin = new Thickness(0, 12, 0, 0) };
+            Button reset = SecondaryButton("æš‚å­˜å…¨æ›²çº¿å½’é›¶");
+            reset.Margin = new Thickness(0, 0, 8, 8);
+            reset.IsEnabled = snapshot.VfPoints.Count != 0;
+            reset.Click += delegate { StageVfReset(); };
+            actions.Children.Add(reset);
+            Button discard = SecondaryButton("æ”¾å¼ƒæš‚å­˜");
+            discard.Margin = new Thickness(0, 0, 8, 8);
+            discard.IsEnabled = true;
+            discard.Click += delegate { DiscardVoltageDrafts(); };
+            actions.Children.Add(discard);
+            applyStagedVfButton = PrimaryButton("é€ç‚¹åº”ç”¨å¹¶éªŒè¯");
+            applyStagedVfButton.Margin = new Thickness(0, 0, 8, 8);
+            applyStagedVfButton.IsEnabled = writesEnabled && stagedVfChanges.Count != 0;
+            applyStagedVfButton.Click += delegate { ApplyStagedVf(); };
+            actions.Children.Add(applyStagedVfButton);
+            action.Children.Add(actions);
+            actionCard.Child = action;
+            Grid.SetColumn(actionCard, 2);
+            editors.Children.Add(actionCard);
+            return editors;
+        }
+
+        private static TextBox VoltageFieldTextBox(UIElement field)
+        {
+            StackPanel stack = field as StackPanel;
+            if (stack == null || stack.Children.Count < 2) return null;
+            Grid line = stack.Children[1] as Grid;
+            if (line == null || line.Children.Count == 0) return null;
+            return line.Children[0] as TextBox;
+        }
+
+        private UIElement BuildVoltageField(string label, string unit, string value, Action<string> changed, int? minimum, int? maximum, int tick)
+        {
+            StackPanel field = new StackPanel { Margin = new Thickness(0, 0, 8, 0) };
+            field.Children.Add(new TextBlock { Text = label, Foreground = MutedBrush, FontSize = 9, Margin = new Thickness(0, 0, 0, 4) });
+            Grid line = new Grid();
+            line.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            line.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            TextBox input = new TextBox
+            {
+                Text = value ?? string.Empty,
+                Background = Brush("#0C131E"),
+                Foreground = Brushes.White,
+                BorderBrush = StrokeBrush,
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(8, 6, 8, 6),
+                CaretBrush = AccentBrush,
+                MinWidth = 58
+            };
+            input.TextChanged += delegate
+            {
+                changed(input.Text);
+            };
+            line.Children.Add(input);
+            if (!string.IsNullOrEmpty(unit))
+            {
+                TextBlock suffix = new TextBlock { Text = unit, Foreground = MutedBrush, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(6, 0, 0, 0), FontSize = 9 };
+                Grid.SetColumn(suffix, 1);
+                line.Children.Add(suffix);
+            }
+            field.Children.Add(line);
+            AddIntegerSlider(field, input, minimum, maximum, tick);
+            return field;
+        }
+
+        private static void AddIntegerSlider(Panel parent, TextBox input, int? minimum, int? maximum, int tick)
+        {
+            if (!minimum.HasValue || !maximum.HasValue || minimum.Value >= maximum.Value) return;
+            int step = Math.Max(1, tick);
+            int parsed;
+            double initial = minimum.Value;
+            if (TryParseInteger(input.Text, out parsed) && parsed >= minimum.Value && parsed <= maximum.Value)
+                initial = SnapInteger(parsed, minimum.Value, maximum.Value, step);
+
+            Slider slider = new Slider
+            {
+                Minimum = minimum.Value,
+                Maximum = maximum.Value,
+                Value = initial,
+                TickFrequency = step,
+                SmallChange = step,
+                LargeChange = Math.Max(step, (maximum.Value - minimum.Value) / 20),
+                IsSnapToTickEnabled = true,
+                IsMoveToPointEnabled = true,
+                AutoToolTipPlacement = AutoToolTipPlacement.TopLeft,
+                AutoToolTipPrecision = 0,
+                Foreground = AccentBrush,
+                Background = StrokeBrush,
+                Height = 22,
+                Margin = new Thickness(0, 2, 0, 6)
+            };
+            bool synchronizing = false;
+            slider.ValueChanged += delegate
+            {
+                if (synchronizing) return;
+                synchronizing = true;
+                int snapped = SnapInteger((int)Math.Round(slider.Value), minimum.Value, maximum.Value, step);
+                slider.Value = snapped;
+                input.Text = snapped.ToString(CultureInfo.InvariantCulture);
+                synchronizing = false;
+            };
+            input.TextChanged += delegate
+            {
+                int value;
+                if (synchronizing || !TryParseInteger(input.Text, out value) || value < minimum.Value || value > maximum.Value) return;
+                synchronizing = true;
+                slider.Value = SnapInteger(value, minimum.Value, maximum.Value, step);
+                synchronizing = false;
+            };
+            parent.Children.Add(slider);
+        }
+
+        private static int SnapInteger(int value, int minimum, int maximum, int tick)
+        {
+            int snapped = minimum + (int)Math.Round((value - minimum) / (double)tick) * tick;
+            return Math.Max(minimum, Math.Min(maximum, snapped));
+        }
+
+        private void ApplyVoltageRailTarget(int railIndex)
+        {
+            string minimumText = railIndex == 0 ? nvvddMinimumDraft : msvddMinimumDraft;
+            string maximumText = railIndex == 0 ? nvvddMaximumDraft : msvddMaximumDraft;
+            int minimum;
+            int maximum;
+            if (!TryParseInteger(minimumText, out minimum) || !TryParseInteger(maximumText, out maximum))
+            {
+                SetUiError("ç”µå‹èŒƒå›´å¿…é¡»æ˜¯æ•´æ•° mVã€‚");
+                return;
+            }
+            VoltageRailContract rail = snapshot == null || snapshot.Voltage == null ? null : snapshot.Voltage.FindRail(railIndex);
+            try
+            {
+                if (rail == null) throw new InvalidOperationException("ç›®æ ‡ç”µå‹è½¨ä¸å¯ç”¨ã€‚");
+                NvApiVoltageLayouts.CalculateTargetOffsets(
+                    rail,
+                    minimum,
+                    maximum,
+                    xocEnabled,
+                    snapshot != null && snapshot.MobileRelOnlyCompatible);
+            }
+            catch (Exception ex)
+            {
+                SetUiError("ç”µå‹ç›®æ ‡æ— æ•ˆï¼š" + ex.Message);
+                return;
+            }
+            ExecuteConfirmedWrite(
+                (railIndex == 0 ? "NVVDD" : "MSVDD") + " " + minimum + ".." + maximum + " mV",
+                delegate
+                {
+                    nvBackend.ApplyVoltageRailRangeVerified(
+                        railIndex,
+                        minimum,
+                        maximum,
+                        xocEnabled,
+                        snapshot != null && snapshot.MobileRelOnlyCompatible);
+                });
+        }
+
+        private void ApplyVoltageBoostTarget()
+        {
+            int percentage;
+            if (!TryParseInteger(voltageBoostDraft, out percentage) || percentage < 0 || percentage > 100)
+            {
+                SetUiError("Voltage Boost å¿…é¡»æ˜¯ 0..100 çš„æ•´æ•°ç™¾åˆ†æ¯”ã€‚");
+                return;
+            }
+            ExecuteConfirmedWrite("Voltage Boost " + percentage + "%", delegate { nvBackend.ApplyVoltageBoostVerified(percentage); });
+        }
+
+        private void ApplyXbarTarget()
+        {
+            int offset;
+            if (!TryParseInteger(xbarOffsetDraft, out offset))
+            {
+                SetUiError("Crossbar offset å¿…é¡»æ˜¯æ•´æ•° MHzã€‚");
+                return;
+            }
+            if (snapshot != null && snapshot.Xbar.MinimumOffsetMHz.HasValue && offset < snapshot.Xbar.MinimumOffsetMHz.Value ||
+                snapshot != null && snapshot.Xbar.MaximumOffsetMHz.HasValue && offset > snapshot.Xbar.MaximumOffsetMHz.Value)
+            {
+                SetUiError("Crossbar offset è¶…å‡ºé©±åŠ¨æŠ¥å‘ŠèŒƒå›´ã€‚");
+                return;
+            }
+            ExecuteConfirmedWrite("Crossbar " + offset + " MHz", delegate { nvBackend.ApplyXbarVerified(offset); });
+        }
+
+        private void ApplyClockDomainTarget(XbarSnapshot domainSnapshot, ClockDomainDescriptor domain, string draft)
+        {
+            int offset;
+            if (!TryParseInteger(draft, out offset))
+            {
+                SetUiError(domain.Name + " offset å¿…é¡»æ˜¯æ•´æ•° MHzã€‚");
+                return;
+            }
+            if (domainSnapshot == null || !domainSnapshot.MinimumOffsetMHz.HasValue || !domainSnapshot.MaximumOffsetMHz.HasValue ||
+                offset < domainSnapshot.MinimumOffsetMHz.Value || offset > domainSnapshot.MaximumOffsetMHz.Value)
+            {
+                SetUiError(domain.Name + " offset è¶…å‡ºé©±åŠ¨æŠ¥å‘ŠèŒƒå›´ã€‚");
+                return;
+            }
+            ExecuteConfirmedWrite(domain.Name + " " + offset + " MHz", delegate
+            {
+                if (domain == NvApiXbarLayouts.Sys) nvBackend.ApplySysClockVerified(offset);
+                else if (domain == NvApiXbarLayouts.Video) nvBackend.ApplyVideoClockVerified(offset);
+                else nvBackend.ApplyXbarVerified(offset);
+            });
+        }
+
+        private void ApplyFanTarget(FanSnapshot fan)
+        {
+            if (fan == null || nvBackend == null) return;
+            bool manual;
+            if (!fanManualDrafts.TryGetValue(fan.CoolerId, out manual)) manual = fan.Manual;
+            string text;
+            if (!fanDutyDrafts.TryGetValue(fan.CoolerId, out text)) text = string.Empty;
+            int percent;
+            if (!TryParseInteger(text, out percent) || percent < 0 || percent > 100)
+            {
+                SetUiError("é£æ‰‡ duty å¿…é¡»æ˜¯ 0..100 çš„æ•´æ•°ç™¾åˆ†æ¯”ã€‚");
+                return;
+            }
+            uint dutyPercent = checked((uint)percent);
+            if (manual && (dutyPercent < fan.MinimumDutyPercent || dutyPercent > fan.MaximumDutyPercent))
+            {
+                SetUiError("é£æ‰‡ duty è¶…å‡ºé©±åŠ¨å®æ—¶èŒƒå›´ã€‚");
+                return;
+            }
+            ExecuteConfirmedWrite("Fan " + fan.CoolerId + " Â· " + (manual ? percent + "% Manual" : "Auto"), delegate
+            {
+                nvBackend.ApplyFanVerified(fan.CoolerId, manual, dutyPercent);
+            });
+        }
+
+        private void StageVfPointTarget()
+        {
+            int pointIndex;
+            int targetMHz;
+            if (!TryParseInteger(vfPointDraft, out pointIndex) || !TryParseInteger(vfTargetDraft, out targetMHz))
+            {
+                SetUiError("V/F ç‚¹ç´¢å¼•å’Œç›®æ ‡é¢‘ç‡å¿…é¡»æ˜¯æ•´æ•°ã€‚");
+                return;
+            }
+            try
+            {
+                MergeVfChanges(VfCurvePlanner.PlanPointTarget(
+                    BuildVfPlanningCurve(),
+                    pointIndex,
+                    targetMHz));
+                vfSelectedPointIndices.Clear();
+                vfSelectedPointIndices.Add(pointIndex);
+                vfSelectedPointIndex = pointIndex;
+                statusText.Text = "å·²æš‚å­˜ V/F ç‚¹ " + pointIndex + "ï¼›æœªæ‰§è¡Œç¡¬ä»¶å†™å…¥ã€‚";
+                statusText.Foreground = AccentBrush;
+                RenderActivePage();
+            }
+            catch (Exception ex)
+            {
+                SetUiError("V/F ç‚¹ç›®æ ‡æ— æ•ˆï¼š" + ex.Message);
+            }
+        }
+
+        private void StageVfRegion()
+        {
+            int first;
+            int last;
+            int offset;
+            if (!TryParseInteger(vfRegionStartDraft, out first) ||
+                !TryParseInteger(vfRegionEndDraft, out last) ||
+                !TryParseInteger(vfRegionOffsetDraft, out offset))
+            {
+                SetUiError("V/F åŒºåŸŸèµ·ç‚¹ã€ç»ˆç‚¹å’Œ offset å¿…é¡»æ˜¯æ•´æ•°ã€‚");
+                return;
+            }
+            try
+            {
+                MergeVfChanges(VfCurvePlanner.PlanRegionalOffset(BuildVfPlanningCurve(), first, last, offset));
+                statusText.Text = "å·²æš‚å­˜ V/F åŒºåŸŸ " + first + ".." + last + "ï¼›æœªæ‰§è¡Œç¡¬ä»¶å†™å…¥ã€‚";
+                statusText.Foreground = AccentBrush;
+                RenderActivePage();
+            }
+            catch (Exception ex)
+            {
+                SetUiError("V/F åŒºåŸŸæ— æ•ˆï¼š" + ex.Message);
+            }
+        }
+
+        private void StageVfFlatten()
+        {
+            int pointIndex;
+            if (!TryParseInteger(vfPointDraft, out pointIndex))
+            {
+                SetUiError("V/F æ‹‰å¹³é”šç‚¹å¿…é¡»æ˜¯æ•´æ•°ã€‚");
+                return;
+            }
+            try
+            {
+                MergeVfChanges(VfCurvePlanner.PlanFlattenAbove(
+                    BuildVfPlanningCurve(),
+                    pointIndex));
+                statusText.Text = "å·²ä» V/F ç‚¹ " + pointIndex + " å‘ä¸Šæš‚å­˜æ‹‰å¹³ï¼›æœªæ‰§è¡Œç¡¬ä»¶å†™å…¥ã€‚";
+                statusText.Foreground = AccentBrush;
+                RenderActivePage();
+            }
+            catch (Exception ex)
+            {
+                SetUiError("V/F æ‹‰å¹³æ— æ•ˆï¼š" + ex.Message);
+            }
+        }
+
+        private void StageVfReset()
+        {
+            try
+            {
+                MergeVfChanges(VfCurvePlanner.PlanReset(snapshot.VfPoints));
+                statusText.Text = "å·²æš‚å­˜ 127 ç‚¹ offset å½’é›¶ï¼›æœªæ‰§è¡Œç¡¬ä»¶å†™å…¥ã€‚";
+                statusText.Foreground = AccentBrush;
+                RenderActivePage();
+            }
+            catch (Exception ex)
+            {
+                SetUiError("V/F é‡ç½®æš‚å­˜å¤±è´¥ï¼š" + ex.Message);
+            }
+        }
+
+        private IList<VfPointSnapshot> BuildVfPlanningCurve()
+        {
+            Dictionary<int, int> changes = new Dictionary<int, int>();
+            for (int index = 0; index < stagedVfChanges.Count; index++)
+                changes[stagedVfChanges[index].Index] = stagedVfChanges[index].FrequencyOffsetKHz;
+            List<VfPointSnapshot> result = new List<VfPointSnapshot>();
+            for (int index = 0; index < snapshot.VfPoints.Count; index++)
+            {
+                VfPointSnapshot source = snapshot.VfPoints[index];
+                int offset;
+                if (!changes.TryGetValue(source.Index, out offset)) offset = source.FrequencyOffsetKHz;
+                result.Add(new VfPointSnapshot
+                {
+                    Index = source.Index,
+                    VoltageUv = source.VoltageUv,
+                    BaseFrequencyKHz = source.BaseFrequencyKHz,
+                    ActualFrequencyKHz = source.ActualFrequencyKHz,
+                    FrequencyOffsetKHz = offset
+                });
+            }
+            return result;
+        }
+
+        private int TargetCoreOffsetMHz()
+        {
+            if (pendingProfile != null && pendingProfile.Controls.Core.Enabled)
+                return pendingProfile.Controls.Core.OffsetMHz;
+            return snapshot == null ? 0 : (snapshot.Tuning.CoreOffsetMHz ?? 0);
+        }
+
+        private void MergeVfChanges(IList<VfOffsetChange> changes)
+        {
+            for (int changeIndex = 0; changeIndex < changes.Count; changeIndex++)
+            {
+                VfOffsetChange change = changes[changeIndex];
+                bool replaced = false;
+                for (int index = 0; index < stagedVfChanges.Count; index++)
+                {
+                    if (stagedVfChanges[index].Index != change.Index) continue;
+                    stagedVfChanges[index] = new VfOffsetChange { Index = change.Index, FrequencyOffsetKHz = change.FrequencyOffsetKHz };
+                    replaced = true;
+                    break;
+                }
+                if (!replaced)
+                    stagedVfChanges.Add(new VfOffsetChange { Index = change.Index, FrequencyOffsetKHz = change.FrequencyOffsetKHz });
+            }
+            stagedVfChanges.Sort(delegate(VfOffsetChange left, VfOffsetChange right) { return left.Index.CompareTo(right.Index); });
+        }
+
+        private void DiscardVoltageDrafts()
+        {
+            pendingProfile = null;
+            stagedVfChanges.Clear();
+            voltageDraftInitialized = false;
+            statusText.Text = "å·²æ”¾å¼ƒç”µå‹ã€Crossbar ä¸ V/F æš‚å­˜ï¼Œæ¢å¤å½“å‰é©±åŠ¨è¯»æ•°ã€‚";
+            statusText.Foreground = AccentBrush;
+            RenderActivePage();
+        }
+
+        private void ApplyStagedVf()
+        {
+            if (stagedVfChanges.Count == 0 || nvBackend == null) return;
+            List<VfOffsetChange> requested = new List<VfOffsetChange>();
+            for (int index = 0; index < stagedVfChanges.Count; index++)
+                requested.Add(new VfOffsetChange { Index = stagedVfChanges[index].Index, FrequencyOffsetKHz = stagedVfChanges[index].FrequencyOffsetKHz });
+            ExecuteConfirmedBestEffortWrite(requested.Count + " ä¸ª V/F ç‚¹", delegate
+            {
+                BestEffortWriteResult result = nvBackend.ApplyVfOffsetsVerified(requested);
+                RemoveSuccessfulVfDrafts(result);
+                return result;
+            });
+        }
+
+        private void RemoveSuccessfulVfDrafts(BestEffortWriteResult result)
+        {
+            if (result == null) return;
+            VfCurveInteraction.RemoveSuccessfulDrafts(stagedVfChanges, result.SuccessfulSteps);
+        }
+
+        private void ExecuteConfirmedBestEffortWrite(string target, Func<BestEffortWriteResult> write)
+        {
+            ExecuteConfirmedBestEffortWrite(target, write, false);
+        }
+
+        private void ExecuteConfirmedBestEffortWrite(string target, Func<BestEffortWriteResult> write, bool resetEditorState)
+        {
+            if (!CanInitiateWrite || nvBackend == null)
+            {
+                SetUiError("å½“å‰è¿è¡Œå¤„äºåªè¯»æ¨¡å¼ï¼Œæœªå‘é€ä»»ä½•ç¡¬ä»¶å†™å…¥ã€‚");
+                return;
+            }
+            if (!RiskConfirmationDialog.Show(this, target))
+            {
+                statusText.Text = "å·²å–æ¶ˆåº”ç”¨ï¼›æ²¡æœ‰å‘é€ SETã€‚";
+                statusText.Foreground = MutedBrush;
+                ApplyLocalizationToTree(Content as DependencyObject, true);
+                return;
+            }
+            if (uiQaMode)
+            {
+                statusText.Text = "UI éªŒæ”¶å®Œæˆï¼šç¡®è®¤æµç¨‹å¯ç”¨ï¼Œæµ‹è¯•æ„å»ºæœªå‘é€ä»»ä½• SETã€‚";
+                statusText.Foreground = AccentBrush;
+                ApplyLocalizationToTree(Content as DependencyObject, true);
+                return;
+            }
+            try
+            {
+                CompleteBestEffortWrite(target, write(), resetEditorState);
+            }
+            catch (Exception ex)
+            {
+                RefreshSnapshot();
+                SetUiError(target + " æ— æ³•å¼€å§‹åˆ†é¡¹å†™å…¥ï¼š" + ex.Message);
+            }
+        }
+
+        private void ExecuteConfirmedWrite(string target, Action write)
+        {
+            if (!CanInitiateWrite || nvBackend == null)
+            {
+                SetUiError("å½“å‰è¿è¡Œå¤„äºåªè¯»æ¨¡å¼ï¼Œæœªå‘é€ä»»ä½•ç¡¬ä»¶å†™å…¥ã€‚");
+                return;
+            }
+            if (!RiskConfirmationDialog.Show(this, target))
+            {
+                statusText.Text = "å·²å–æ¶ˆåº”ç”¨ï¼›æ²¡æœ‰å‘é€ SETã€‚";
+                statusText.Foreground = MutedBrush;
+                ApplyLocalizationToTree(Content as DependencyObject, true);
+                return;
+            }
+            if (uiQaMode)
+            {
+                RefreshSnapshot();
+                RenderActivePage();
+                statusText.Text = "UI éªŒæ”¶å®Œæˆï¼šå•é¡¹åº”ç”¨åˆ·æ–°å·²æ‰§è¡Œï¼Œå…¶ä»–è‰ç¨¿ä¿æŒä¸å˜ï¼›æµ‹è¯•æ„å»ºæœªå‘é€ä»»ä½• SETã€‚";
+                statusText.Foreground = AccentBrush;
+                ApplyLocalizationToTree(Content as DependencyObject, true);
+                return;
+            }
+            try
+            {
+                write();
+                // A single-item apply must not discard the rest of the editor draft.
+                // The requested field already contains the value that was just verified;
+                // RefreshSnapshot updates live hints while the other uncommitted fields,
+                // pending profile targets and staged V/F points remain intact.
+                EditorRefreshPolicy.Apply(false, ref voltageDraftInitialized, ref pendingProfile, stagedVfChanges);
+                RefreshSnapshot();
+                RenderActivePage();
+                statusText.Text = target + " å·²åº”ç”¨å¹¶é€šè¿‡å›è¯»ã€‚";
+                statusText.Foreground = AccentBrush;
+                ApplyLocalizationToTree(Content as DependencyObject, true);
+            }
+            catch (Exception ex)
+            {
+                RefreshSnapshot();
+                SetUiError(target + " æ‰§è¡Œæˆ–å›è¯»å¤±è´¥ï¼›æœªè‡ªåŠ¨å›é€€ï¼Œå½“å‰çŠ¶æ€ä»¥åˆ·æ–°åçš„ GET ä¸ºå‡†ï¼š" + ex.Message);
+            }
+        }
+
+        private void CompleteBestEffortWrite(string target, BestEffortWriteResult result)
+        {
+            CompleteBestEffortWrite(target, result, false);
+        }
+
+        private void CompleteBestEffortWrite(string target, BestEffortWriteResult result, bool resetEditorState)
+        {
+            if (result == null) throw new InvalidOperationException("åˆ†é¡¹å†™å…¥æ²¡æœ‰è¿”å›ç»“æœã€‚");
+            EditorRefreshPolicy.Apply(resetEditorState, ref voltageDraftInitialized, ref pendingProfile, stagedVfChanges);
+            RefreshSnapshot();
+            RenderActivePage();
+            if (result.HasFailures)
+            {
+                statusText.Text = target + " åˆ†é¡¹å†™å…¥å®Œæˆã€‚æˆåŠŸï¼š" + result.SuccessfulLabels() + "ï¼›å¤±è´¥ï¼š" + result.FailureDetails() + "ã€‚æœªå›é€€æˆåŠŸé¡¹ã€‚";
+                statusText.Foreground = result.HasSuccesses ? WarningBrush : ErrorBrush;
+            }
+            else
+            {
+                statusText.Text = target + " å…¨éƒ¨é¡¹ç›®å·²åº”ç”¨å¹¶é€šè¿‡å›è¯»ã€‚";
+                statusText.Foreground = AccentBrush;
+            }
+            ApplyLocalizationToTree(Content as DependencyObject, true);
+        }
+
+        private void ResetAllAndApplyDirect()
+        {
+            if (!CanInitiateWrite || nvBackend == null || snapshot == null)
+            {
+                SetUiError("å½“å‰è¿è¡Œå¤„äºåªè¯»æ¨¡å¼ï¼Œæœªå‘é€ä»»ä½•ç¡¬ä»¶å†™å…¥ã€‚");
+                return;
+            }
+            if (uiQaMode)
+            {
+                statusText.Text = "UI éªŒæ”¶å®Œæˆï¼šä¸€é”®å¤ä½å¯ç›´æ¥è§¦å‘ï¼Œæµ‹è¯•æ„å»ºæœªå‘é€ä»»ä½• SETã€‚";
+                statusText.Foreground = AccentBrush;
+                ApplyLocalizationToTree(Content as DependencyObject, true);
+                return;
+            }
+            try
+            {
+                resetAllButton.IsEnabled = false;
+                BestEffortWriteResult result = nvBackend.ApplyAllDefaultsVerified();
+                pendingProfile = null;
+                stagedVfChanges.Clear();
+                xocEnabled = false;
+                voltageDraftInitialized = false;
+                CompleteBestEffortWrite("ä¸€é”®å¤ä½", result, true);
+            }
+            catch (Exception ex)
+            {
+                RefreshSnapshot();
+                SetUiError("ä¸€é”®å¤ä½æ— æ³•å¼€å§‹ï¼š" + ex.Message);
+            }
+            finally
+            {
+                if (resetAllButton != null) resetAllButton.IsEnabled = CanInitiateWrite && snapshot != null;
+            }
+        }
+
+        private static bool TryParseInteger(string value, out int parsed)
+        {
+            return Int32.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed);
+        }
+
+        private void SetUiError(string message)
+        {
+            statusText.Text = message;
+            statusText.Foreground = ErrorBrush;
+            ApplyLocalizationToTree(Content as DependencyObject, true);
+        }
+
+        private static UIElement VoltageRailCard(VoltageRailContract rail)
+        {
+            Border card = CardShell();
+            StackPanel stack = new StackPanel();
+            stack.Children.Add(new TextBlock
+            {
+                Text = rail.RailIndex == 0 ? "NVVDD Â· Rail 0" : (rail.RailIndex == 1 ? "MSVDD Â· Rail 1" : "Rail " + rail.RailIndex),
+                FontSize = 15,
+                FontWeight = FontWeights.SemiBold
+            });
+            Grid values = new Grid { Margin = new Thickness(0, 14, 0, 0) };
+            values.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            values.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            for (int column = 0; column < 4; column++) values.ColumnDefinitions.Add(new ColumnDefinition());
+            AddRailValue(values, 0, 0, "SENSED", rail.SensedUv, false);
+            AddRailValue(values, 1, 0, "REL", rail.ReliabilityLimitUv, false);
+            AddRailValue(values, 2, 0, "ALT", rail.AlternateLimitUv, true);
+            AddRailValue(values, 3, 0, "OV", rail.OvervoltageLimitUv, false);
+            AddRailValue(values, 0, 1, "MAX", rail.MaximumLimitUv, false);
+            AddRailValue(values, 1, 1, "MIN", rail.MinimumLimitUv, false);
+            AddRailValue(values, 2, 1, "NOISE", rail.NoiseLimitUv, false);
+            AddRailValue(values, 3, 1, "MARGIN", rail.MarginUv, false);
+            stack.Children.Add(values);
+            stack.Children.Add(new TextBlock
+            {
+                Text = "Control offsets ÂµV  " + rail.PrimaryMaximumOffsetUv + " / " + rail.AlternateMaximumOffsetUv + " / " + rail.MinimumOffsetUv,
+                Foreground = Brush("#667891"),
+                FontSize = 10,
+                Margin = new Thickness(0, 13, 0, 0)
+            });
+            card.Child = stack;
+            return card;
+        }
+
+        private static void AddRailValue(Grid grid, int column, int row, string label, long value, bool allowMissing)
+        {
+            StackPanel stack = new StackPanel { Margin = new Thickness(0, row == 0 ? 0 : 12, 8, 0) };
+            stack.Children.Add(new TextBlock { Text = label, Foreground = MutedBrush, FontSize = 9 });
+            stack.Children.Add(new TextBlock
+            {
+                Text = allowMissing && value == 0 ? "N/A" : (value / 1000.0).ToString("N1", CultureInfo.InvariantCulture) + " mV",
+                Foreground = Brushes.White,
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 3, 0, 0)
+            });
+            Grid.SetColumn(stack, column);
+            Grid.SetRow(stack, row);
+            grid.Children.Add(stack);
+        }
+
+        private UIElement BuildVfChart(
+            IList<VfPointSnapshot> points,
+            IList<VfOffsetChange> stagedChanges,
+            int globalCoreOffsetMHz)
+        {
+            Canvas canvas = new Canvas
+            {
+                Height = 430,
+                Width = 980,
+                Background = Brush("#0C131E"),
+                ClipToBounds = true,
+                Focusable = true,
+                FocusVisualStyle = null,
+                Cursor = Cursors.Cross
+            };
+            // Keyboard focus is required for arrow-key point editing, but WPF's default
+            // BringIntoView can scroll a partially visible chart while the pointer is
+            // captured. That changes pointer coordinates mid-drag and can cause a large,
+            // unintended frequency jump.
+            canvas.RequestBringIntoView += delegate(object sender, RequestBringIntoViewEventArgs args)
+            {
+                args.Handled = true;
+            };
+            if (points == null || points.Count < 2)
+            {
+                canvas.Children.Add(new TextBlock { Text = "æ²¡æœ‰å¯ç»˜åˆ¶çš„ V/F ç‚¹", Foreground = MutedBrush, Margin = new Thickness(18) });
+                return canvas;
+            }
+
+            const double width = 980;
+            const double height = 430;
+            const double left = 58;
+            const double right = 22;
+            const double top = 24;
+            const double bottom = 36;
+            double plotWidth = width - left - right;
+            double plotHeight = height - top - bottom;
+            long globalCoreOffsetKHz = checked((long)globalCoreOffsetMHz * 1000L);
+            uint minVoltage = points[0].VoltageUv;
+            uint maxVoltage = points[points.Count - 1].VoltageUv;
+
+            Dictionary<int, int> staged = new Dictionary<int, int>();
+            if (stagedChanges != null)
+            {
+                for (int index = 0; index < stagedChanges.Count; index++)
+                    staged[stagedChanges[index].Index] = stagedChanges[index].FrequencyOffsetKHz;
+            }
+
+            double minimumAllowedFrequency = Double.MaxValue;
+            double maximumAllowedFrequency = Double.MinValue;
+            for (int index = 0; index < points.Count; index++)
+            {
+                VfPointSnapshot point = points[index];
+                long minimumOffset = Math.Max(-1000000L, 1L - point.BaseFrequencyKHz);
+                long maximumOffset = Math.Min(1000000L, 6000000L - point.BaseFrequencyKHz);
+                minimumAllowedFrequency = Math.Min(minimumAllowedFrequency, Math.Max(1000L, point.BaseFrequencyKHz + minimumOffset));
+                maximumAllowedFrequency = Math.Max(maximumAllowedFrequency, Math.Max(1000L, point.BaseFrequencyKHz + maximumOffset));
+            }
+            double axisMinimumFrequency = Math.Max(1000.0, Math.Floor(minimumAllowedFrequency / 100000.0) * 100000.0);
+            double axisMaximumFrequency = Math.Ceiling(maximumAllowedFrequency / 100000.0) * 100000.0;
+            if (axisMaximumFrequency <= axisMinimumFrequency) axisMaximumFrequency = axisMinimumFrequency + 100000.0;
+
+            Func<VfPointSnapshot, double> pointX = delegate(VfPointSnapshot point)
+            {
+                return left + (point.VoltageUv - minVoltage) * plotWidth / Math.Max(1.0, maxVoltage - minVoltage);
+            };
+            Func<double, double> frequencyY = delegate(double frequencyKHz)
+            {
+                return top + (axisMaximumFrequency - frequencyKHz) * plotHeight / (axisMaximumFrequency - axisMinimumFrequency);
+            };
+            Func<VfPointSnapshot, int> previewOffset = delegate(VfPointSnapshot point)
+            {
+                int value;
+                return staged.TryGetValue(point.Index, out value) ? value : point.FrequencyOffsetKHz;
+            };
+            Func<VfPointSnapshot, double> previewFrequency = delegate(VfPointSnapshot point)
+            {
+                return point.BaseFrequencyKHz + previewOffset(point);
+            };
+
+            for (int lineIndex = 0; lineIndex <= 6; lineIndex++)
+            {
+                double y = top + plotHeight * lineIndex / 6.0;
+                canvas.Children.Add(new Line { X1 = left, X2 = width - right, Y1 = y, Y2 = y, Stroke = StrokeBrush, StrokeThickness = 1, IsHitTestVisible = false });
+                double labelFrequency = axisMaximumFrequency - (axisMaximumFrequency - axisMinimumFrequency) * lineIndex / 6.0;
+                AddCanvasLabel(canvas, Math.Round(labelFrequency / 1000.0).ToString(CultureInfo.InvariantCulture), 7, y - 7);
+            }
+            for (int lineIndex = 0; lineIndex <= 6; lineIndex++)
+            {
+                double x = left + plotWidth * lineIndex / 6.0;
+                canvas.Children.Add(new Line { X1 = x, X2 = x, Y1 = top, Y2 = height - bottom, Stroke = Brush("#172131"), StrokeThickness = 1, IsHitTestVisible = false });
+            }
+
+            Polyline referenceCurve = new Polyline
+            {
+                Stroke = Brush("#47566C"),
+                StrokeThickness = 1.2,
+                StrokeDashArray = new DoubleCollection(new double[] { 4, 3 }),
+                IsHitTestVisible = false
+            };
+            Polyline previewCurve = new Polyline { Stroke = staged.Count == 0 ? AccentBrush : WarningBrush, StrokeThickness = 2, IsHitTestVisible = false };
+            canvas.Children.Add(referenceCurve);
+            canvas.Children.Add(previewCurve);
+
+            Line selectedGuide = new Line
+            {
+                Y1 = top,
+                Y2 = height - bottom,
+                Stroke = SecondaryAccentBrush,
+                StrokeThickness = 1,
+                StrokeDashArray = new DoubleCollection(new double[] { 3, 3 }),
+                Visibility = Visibility.Collapsed,
+                IsHitTestVisible = false
+            };
+            canvas.Children.Add(selectedGuide);
+
+            List<Ellipse> markers = new List<Ellipse>();
+            for (int index = 0; index < points.Count; index++)
+            {
+                Ellipse marker = new Ellipse
+                {
+                    Width = 7,
+                    Height = 7,
+                    Fill = Brush("#7A879A"),
+                    Stroke = Brush("#0A0D14"),
+                    StrokeThickness = 1,
+                    IsHitTestVisible = false
+                };
+                markers.Add(marker);
+                canvas.Children.Add(marker);
+            }
+
+            TextBlock selectionInfo = new TextBlock
+            {
+                Foreground = Brushes.White,
+                Background = Brush("#D9141925"),
+                FontSize = 11,
+                FontWeight = FontWeights.SemiBold,
+                Padding = new Thickness(10, 6, 10, 6),
+                IsHitTestVisible = false
+            };
+            Canvas.SetRight(selectionInfo, 28);
+            Canvas.SetTop(selectionInfo, 31);
+            canvas.Children.Add(selectionInfo);
+
+            Rectangle selectionBox = new Rectangle
+            {
+                Fill = Brush("#287BF1C8"),
+                Stroke = AccentBrush,
+                StrokeThickness = 1,
+                StrokeDashArray = new DoubleCollection(new double[] { 4, 3 }),
+                Visibility = Visibility.Collapsed,
+                IsHitTestVisible = false
+            };
+            canvas.Children.Add(selectionBox);
+
+            vfSelectedPointIndices.RemoveWhere(delegate(int pointIndex)
+            {
+                return FindVfPoint(points, pointIndex) == null;
+            });
+            if (!vfSelectedPointIndex.HasValue || FindVfPoint(points, vfSelectedPointIndex.Value) == null)
+                vfSelectedPointIndex = points[0].Index;
+            if (vfSelectedPointIndices.Count == 0)
+                vfSelectedPointIndices.Add(vfSelectedPointIndex.Value);
+
+            Func<List<int>> selectedIndices = delegate
+            {
+                List<int> result = new List<int>();
+                for (int index = 0; index < points.Count; index++)
+                    if (vfSelectedPointIndices.Contains(points[index].Index)) result.Add(points[index].Index);
+                return result;
+            };
+
+            Action updateEditorsFromPrimary = delegate
+            {
+                if (!vfSelectedPointIndex.HasValue) return;
+                VfPointSnapshot point = FindVfPoint(points, vfSelectedPointIndex.Value);
+                if (point == null) return;
+                vfPointDraft = point.Index.ToString(CultureInfo.InvariantCulture);
+                vfTargetDraft = Math.Round(previewFrequency(point) / 1000.0).ToString(CultureInfo.InvariantCulture);
+                if (vfPointIndexInput != null) vfPointIndexInput.Text = vfPointDraft;
+                if (vfTargetFrequencyInput != null) vfTargetFrequencyInput.Text = vfTargetDraft;
+            };
+
+            Action redraw = null;
+            redraw = delegate
+            {
+                referenceCurve.Points.Clear();
+                previewCurve.Points.Clear();
+                previewCurve.Stroke = staged.Count == 0 ? AccentBrush : WarningBrush;
+                for (int index = 0; index < points.Count; index++)
+                {
+                    VfPointSnapshot point = points[index];
+                    double x = pointX(point);
+                    double referenceFrequency = point.BaseFrequencyKHz + point.FrequencyOffsetKHz;
+                    double frequency = previewFrequency(point);
+                    referenceCurve.Points.Add(new Point(x, frequencyY(referenceFrequency)));
+                    Point position = new Point(x, frequencyY(frequency));
+                    previewCurve.Points.Add(position);
+                    bool primarySelected = vfSelectedPointIndex.HasValue && vfSelectedPointIndex.Value == point.Index;
+                    bool selected = vfSelectedPointIndices.Contains(point.Index);
+                    bool changed = staged.ContainsKey(point.Index);
+                    Ellipse marker = markers[index];
+                    marker.Width = primarySelected ? 11 : (selected ? 9 : 7);
+                    marker.Height = primarySelected ? 11 : (selected ? 9 : 7);
+                    marker.Fill = primarySelected ? SecondaryAccentBrush : (selected ? AccentBrush : (changed ? WarningBrush : Brush("#7A879A")));
+                    marker.Stroke = selected ? Brushes.White : Brush("#0A0D14");
+                    Canvas.SetLeft(marker, position.X - marker.Width / 2.0);
+                    Canvas.SetTop(marker, position.Y - marker.Height / 2.0);
+                }
+
+                if (!vfSelectedPointIndex.HasValue)
+                {
+                    selectedGuide.Visibility = Visibility.Collapsed;
+                    selectionInfo.Text = VoltelleLocalization.T("ç‚¹å‡»æ›²çº¿ä¸Šçš„ç‚¹å¼€å§‹ç¼–è¾‘");
+                    return;
+                }
+                VfPointSnapshot selectedPoint = FindVfPoint(points, vfSelectedPointIndex.Value);
+                if (selectedPoint == null)
+                {
+                    selectedGuide.Visibility = Visibility.Collapsed;
+                    selectionInfo.Text = VoltelleLocalization.T("ç‚¹å‡»æ›²çº¿ä¸Šçš„ç‚¹å¼€å§‹ç¼–è¾‘");
+                    return;
+                }
+                selectedGuide.X1 = selectedGuide.X2 = pointX(selectedPoint);
+                selectedGuide.Visibility = Visibility.Visible;
+                int selectedOffset = previewOffset(selectedPoint);
+                int pointSpecificOffset = checked(selectedOffset - (int)globalCoreOffsetKHz);
+                List<int> selection = selectedIndices();
+                string selectionText;
+                if (selection.Count <= 1)
+                {
+                    selectionText = "é€‰ä¸­ç‚¹ " + selectedPoint.Index +
+                        " Â· ç”µå‹ " + (selectedPoint.VoltageUv / 1000U) + " mV" +
+                        " Â· é¢‘ç‡ " + Math.Round(previewFrequency(selectedPoint) / 1000.0).ToString(CultureInfo.InvariantCulture) + " MHz" +
+                        " Â· å…¨å±€ " + SignedMHz((int)globalCoreOffsetKHz) +
+                        " Â· ç‚¹åç§» " + SignedMHz(pointSpecificOffset) +
+                        " Â· åˆè®¡ " + SignedMHz(selectedOffset);
+                }
+                else
+                {
+                    VfPointSnapshot firstSelected = FindVfPoint(points, selection[0]);
+                    VfPointSnapshot lastSelected = FindVfPoint(points, selection[selection.Count - 1]);
+                    selectionText = "å·²é€‰æ‹© " + selection.Count + " ä¸ªç‚¹ Â· " +
+                        (firstSelected.VoltageUv / 1000U) + ".." + (lastSelected.VoltageUv / 1000U) +
+                        " mV Â· ä¸»ç‚¹ " + selectedPoint.Index + " Â· æ‰¹é‡æ‹–åŠ¨/æ–¹å‘é”®å¹³ç§»";
+                }
+                selectionInfo.Text = VoltelleLocalization.T(selectionText);
+            };
+
+            Action<int, bool> selectPoint = delegate(int pointIndex, bool replaceSelection)
+            {
+                VfPointSnapshot point = FindVfPoint(points, pointIndex);
+                if (point == null) return;
+                if (replaceSelection) vfSelectedPointIndices.Clear();
+                vfSelectedPointIndices.Add(point.Index);
+                vfSelectedPointIndex = point.Index;
+                updateEditorsFromPrimary();
+                redraw();
+            };
+
+            Action<IList<VfOffsetChange>> applyPlannedChanges = delegate(IList<VfOffsetChange> planned)
+            {
+                for (int plannedIndex = 0; plannedIndex < planned.Count; plannedIndex++)
+                {
+                    VfOffsetChange change = planned[plannedIndex];
+                    VfPointSnapshot source = FindVfPoint(points, change.Index);
+                    for (int stagedIndex = stagedVfChanges.Count - 1; stagedIndex >= 0; stagedIndex--)
+                        if (stagedVfChanges[stagedIndex].Index == change.Index) stagedVfChanges.RemoveAt(stagedIndex);
+                    staged.Remove(change.Index);
+                    if (source != null && change.FrequencyOffsetKHz != source.FrequencyOffsetKHz)
+                    {
+                        stagedVfChanges.Add(new VfOffsetChange
+                        {
+                            Index = change.Index,
+                            FrequencyOffsetKHz = change.FrequencyOffsetKHz
+                        });
+                        staged[change.Index] = change.FrequencyOffsetKHz;
+                    }
+                }
+                stagedVfChanges.Sort(delegate(VfOffsetChange leftChange, VfOffsetChange rightChange)
+                {
+                    return leftChange.Index.CompareTo(rightChange.Index);
+                });
+                updateEditorsFromPrimary();
+                UpdateVfStagingUi();
+                redraw();
+            };
+
+            int lastTranslationDeltaMHz = 0;
+            Func<IList<int>, IDictionary<int, int>, int, bool> stageTranslation = delegate(
+                IList<int> selection,
+                IDictionary<int, int> startingOffsets,
+                int requestedDeltaMHz)
+            {
+                try
+                {
+                    lastTranslationDeltaMHz = VfCurveInteraction.ClampUniformDeltaMHz(
+                        points, selection, startingOffsets, requestedDeltaMHz);
+                    IList<VfOffsetChange> planned = VfCurvePlanner.PlanUniformTranslation(
+                        points, selection, startingOffsets, lastTranslationDeltaMHz);
+                    applyPlannedChanges(planned);
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    SetUiError("V/F æ‰¹é‡å¹³ç§»æ— æ•ˆï¼š" + ex.Message);
+                    return false;
+                }
+            };
+
+            bool dragging = false;
+            bool dragChanged = false;
+            double dragStartY = 0;
+            List<int> dragSelection = null;
+            Dictionary<int, int> dragStartingOffsets = null;
+            canvas.MouseLeftButtonDown += delegate(object sender, MouseButtonEventArgs args)
+            {
+                Point mouse = args.GetPosition(canvas);
+                if (mouse.X < left - 12 || mouse.X > width - right + 12 || mouse.Y < top - 18 || mouse.Y > height - bottom + 18) return;
+                int nearestIndex = -1;
+                double nearestDistance = Double.MaxValue;
+                for (int index = 0; index < previewCurve.Points.Count; index++)
+                {
+                    Point candidate = previewCurve.Points[index];
+                    double dx = candidate.X - mouse.X;
+                    double dy = candidate.Y - mouse.Y;
+                    double distance = Math.Sqrt(dx * dx + dy * dy);
+                    if (distance >= nearestDistance) continue;
+                    nearestDistance = distance;
+                    nearestIndex = index;
+                }
+                if (nearestIndex < 0 || nearestDistance > 24.0) return;
+                int nearestPointIndex = points[nearestIndex].Index;
+                selectPoint(nearestPointIndex, !vfSelectedPointIndices.Contains(nearestPointIndex));
+                dragSelection = selectedIndices();
+                dragStartingOffsets = new Dictionary<int, int>();
+                for (int index = 0; index < dragSelection.Count; index++)
+                {
+                    VfPointSnapshot selectedPoint = FindVfPoint(points, dragSelection[index]);
+                    dragStartingOffsets[dragSelection[index]] = previewOffset(selectedPoint);
+                }
+                dragStartY = mouse.Y;
+                canvas.Focus();
+                canvas.CaptureMouse();
+                dragging = true;
+                dragChanged = false;
+                args.Handled = true;
+            };
+            canvas.MouseMove += delegate(object sender, MouseEventArgs args)
+            {
+                if (!dragging || dragSelection == null || dragStartingOffsets == null || args.LeftButton != MouseButtonState.Pressed) return;
+                Point mouse = args.GetPosition(canvas);
+                double boundedY = Math.Max(top, Math.Min(height - bottom, mouse.Y));
+                int requestedDeltaMHz = (int)Math.Round(
+                    (dragStartY - boundedY) * (axisMaximumFrequency - axisMinimumFrequency) /
+                    plotHeight / 1000.0);
+                if (stageTranslation(dragSelection, dragStartingOffsets, requestedDeltaMHz))
+                    dragChanged = dragChanged || lastTranslationDeltaMHz != 0;
+                args.Handled = true;
+            };
+            canvas.MouseLeftButtonUp += delegate(object sender, MouseButtonEventArgs args)
+            {
+                if (!dragging) return;
+                dragging = false;
+                canvas.ReleaseMouseCapture();
+                if (dragChanged && dragSelection != null)
+                {
+                    statusText.Text = "å·²é€šè¿‡æ›²çº¿æ‹–åŠ¨æ‰¹é‡æš‚å­˜ " + dragSelection.Count + " ä¸ª V/F ç‚¹ Â· " +
+                        (lastTranslationDeltaMHz >= 0 ? "+" : string.Empty) + lastTranslationDeltaMHz + " MHzï¼›å°šæœªæ‰§è¡Œç¡¬ä»¶å†™å…¥ã€‚";
+                    statusText.Foreground = AccentBrush;
+                    ApplyLocalizationToTree(Content as DependencyObject, true);
+                }
+                dragSelection = null;
+                dragStartingOffsets = null;
+                args.Handled = true;
+            };
+
+            bool boxSelecting = false;
+            bool boxAdditive = false;
+            Point boxStart = new Point();
+            canvas.MouseRightButtonDown += delegate(object sender, MouseButtonEventArgs args)
+            {
+                Point mouse = args.GetPosition(canvas);
+                if (mouse.X < left || mouse.X > width - right || mouse.Y < top || mouse.Y > height - bottom) return;
+                boxSelecting = true;
+                boxAdditive = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
+                boxStart = mouse;
+                selectionBox.Visibility = Visibility.Visible;
+                Canvas.SetLeft(selectionBox, mouse.X);
+                Canvas.SetTop(selectionBox, mouse.Y);
+                selectionBox.Width = 0;
+                selectionBox.Height = 0;
+                canvas.Focus();
+                canvas.CaptureMouse();
+                args.Handled = true;
+            };
+            canvas.MouseMove += delegate(object sender, MouseEventArgs args)
+            {
+                if (!boxSelecting || args.RightButton != MouseButtonState.Pressed) return;
+                Point mouse = args.GetPosition(canvas);
+                double boundedX = Math.Max(left, Math.Min(width - right, mouse.X));
+                double boundedY = Math.Max(top, Math.Min(height - bottom, mouse.Y));
+                double x = Math.Min(boxStart.X, boundedX);
+                double y = Math.Min(boxStart.Y, boundedY);
+                Canvas.SetLeft(selectionBox, x);
+                Canvas.SetTop(selectionBox, y);
+                selectionBox.Width = Math.Abs(boundedX - boxStart.X);
+                selectionBox.Height = Math.Abs(boundedY - boxStart.Y);
+                args.Handled = true;
+            };
+            canvas.MouseRightButtonUp += delegate(object sender, MouseButtonEventArgs args)
+            {
+                if (!boxSelecting) return;
+                boxSelecting = false;
+                canvas.ReleaseMouseCapture();
+                Point mouse = args.GetPosition(canvas);
+                double boundedX = Math.Max(left, Math.Min(width - right, mouse.X));
+                double boundedY = Math.Max(top, Math.Min(height - bottom, mouse.Y));
+                double minX = Math.Min(boxStart.X, boundedX);
+                double maxX = Math.Max(boxStart.X, boundedX);
+                double minY = Math.Min(boxStart.Y, boundedY);
+                double maxY = Math.Max(boxStart.Y, boundedY);
+                List<int> hits = new List<int>();
+                for (int index = 0; index < previewCurve.Points.Count; index++)
+                {
+                    Point candidate = previewCurve.Points[index];
+                    if (candidate.X >= minX && candidate.X <= maxX && candidate.Y >= minY && candidate.Y <= maxY)
+                        hits.Add(points[index].Index);
+                }
+                if (!boxAdditive) vfSelectedPointIndices.Clear();
+                for (int index = 0; index < hits.Count; index++) vfSelectedPointIndices.Add(hits[index]);
+                if (hits.Count != 0)
+                    vfSelectedPointIndex = hits[0];
+                else if (vfSelectedPointIndices.Count == 0)
+                    vfSelectedPointIndex = null;
+                else if (!vfSelectedPointIndex.HasValue || !vfSelectedPointIndices.Contains(vfSelectedPointIndex.Value))
+                {
+                    List<int> remaining = selectedIndices();
+                    vfSelectedPointIndex = remaining.Count == 0 ? (int?)null : remaining[0];
+                }
+                selectionBox.Visibility = Visibility.Collapsed;
+                updateEditorsFromPrimary();
+                redraw();
+                statusText.Text = "å·²æ¡†é€‰ " + vfSelectedPointIndices.Count + " ä¸ª V/F ç‚¹ï¼›ä»…æ”¹å˜é€‰æ‹©ï¼Œå°šæœªæ‰§è¡Œç¡¬ä»¶å†™å…¥ã€‚";
+                statusText.Foreground = AccentBrush;
+                ApplyLocalizationToTree(Content as DependencyObject, true);
+                args.Handled = true;
+            };
+
+            canvas.KeyDown += delegate(object sender, KeyEventArgs args)
+            {
+                int selectedListIndex = 0;
+                if (vfSelectedPointIndex.HasValue)
+                {
+                    for (int index = 0; index < points.Count; index++)
+                        if (points[index].Index == vfSelectedPointIndex.Value) selectedListIndex = index;
+                }
+                if (args.Key == Key.Left || args.Key == Key.Right)
+                {
+                    selectedListIndex += args.Key == Key.Left ? -1 : 1;
+                    selectedListIndex = Math.Max(0, Math.Min(points.Count - 1, selectedListIndex));
+                    selectPoint(points[selectedListIndex].Index, true);
+                    args.Handled = true;
+                    return;
+                }
+                if (args.Key != Key.Up && args.Key != Key.Down) return;
+                List<int> selection = selectedIndices();
+                if (selection.Count == 0)
+                {
+                    selectPoint(points[selectedListIndex].Index, true);
+                    selection = selectedIndices();
+                }
+                int delta = (Keyboard.Modifiers & ModifierKeys.Shift) != 0 ? 15 : 1;
+                if (args.Key == Key.Down) delta = -delta;
+                Dictionary<int, int> startingOffsets = new Dictionary<int, int>();
+                for (int index = 0; index < selection.Count; index++)
+                {
+                    VfPointSnapshot selectedPoint = FindVfPoint(points, selection[index]);
+                    startingOffsets[selection[index]] = previewOffset(selectedPoint);
+                }
+                if (stageTranslation(selection, startingOffsets, delta))
+                {
+                    statusText.Text = "å·²é€šè¿‡é”®ç›˜æ‰¹é‡æš‚å­˜ " + selection.Count + " ä¸ª V/F ç‚¹ Â· " +
+                        (lastTranslationDeltaMHz >= 0 ? "+" : string.Empty) + lastTranslationDeltaMHz + " MHzï¼›å°šæœªæ‰§è¡Œç¡¬ä»¶å†™å…¥ã€‚";
+                    statusText.Foreground = AccentBrush;
+                    ApplyLocalizationToTree(Content as DependencyObject, true);
+                }
+                args.Handled = true;
+            };
+
+            AddCanvasLabel(canvas, (minVoltage / 1000U) + " mV", left, height - 27);
+            AddCanvasLabel(canvas, (maxVoltage / 1000U) + " mV", width - 84, height - 27);
+            AddCanvasLabel(canvas, "MHz", 9, 6);
+            updateEditorsFromPrimary();
+            redraw();
+            return canvas;
+        }
+
+        private static VfPointSnapshot FindVfPoint(IList<VfPointSnapshot> points, int pointIndex)
+        {
+            if (points == null) return null;
+            for (int index = 0; index < points.Count; index++)
+                if (points[index].Index == pointIndex) return points[index];
+            return null;
+        }
+
+        private static string SignedMHz(int offsetKHz)
+        {
+            double offsetMHz = offsetKHz / 1000.0;
+            return (offsetKHz >= 0 ? "+" : String.Empty) +
+                offsetMHz.ToString("0.###", CultureInfo.InvariantCulture) + " MHz";
+        }
+
+        private void UpdateVfStagingUi()
+        {
+            if (vfStagedCountText != null)
+            {
+                vfStagedCountText.Text = stagedVfChanges.Count + " ä¸ªç‚¹å¾…åº”ç”¨";
+                vfStagedCountText.Foreground = stagedVfChanges.Count == 0 ? MutedBrush : WarningBrush;
+                ApplyLocalizationToTree(vfStagedCountText, true);
+            }
+            if (applyStagedVfButton != null)
+                applyStagedVfButton.IsEnabled = CanInitiateWrite && stagedVfChanges.Count != 0;
+            if (vfChartSummaryText != null && snapshot != null)
+            {
+                vfChartSummaryText.Text = snapshot.VfPoints.Count == 0
+                    ? "æ›²çº¿ä¸å¯ç”¨"
+                    : snapshot.VfPoints.Count + " ä¸ªæœ‰æ•ˆç‚¹ Â· " + stagedVfChanges.Count + " ä¸ªæš‚å­˜å˜æ›´ Â· " + VfSummary(snapshot);
+                ApplyLocalizationToTree(vfChartSummaryText, true);
+            }
+        }
+
+        private static void AddCanvasLabel(Canvas canvas, string text, double x, double y)
+        {
+            TextBlock label = new TextBlock { Text = text, Foreground = MutedBrush, FontSize = 9 };
+            Canvas.SetLeft(label, x);
+            Canvas.SetTop(label, y);
+            canvas.Children.Add(label);
+        }
+
+        private UIElement BuildPowerPage()
+        {
+            StackPanel page = PageStack();
+            if (snapshot == null)
+            {
+                page.Children.Add(EmptyState("ç­‰å¾… Power Monitor é‡‡æ ·â€¦"));
+                return page;
+            }
+
+            UniformGrid summary = new UniformGrid { Columns = 4 };
+            summary.Children.Add(Metric("Power Monitor æ•´æ¿", PowerMonitorBoard(snapshot), "Status +0x08"));
+            summary.Children.Add(Metric("é©±åŠ¨èŠ¯ç‰‡", TopologyPower(snapshot, true), "Topology ID 0"));
+            summary.Children.Add(Metric("é©±åŠ¨æ•´æ¿", TopologyPower(snapshot, false), "Topology ID 1"));
+            summary.Children.Add(Metric("ä¼šè¯èƒ½é‡", SessionEnergy(snapshot), "ä¸»é€šé“ç´¯è®¡å·®"));
+            page.Children.Add(summary);
+
+            string reasons = "æ— é™é¢‘åŸå› ";
+            bool danger = false;
+            if (snapshot.PowerTelemetry != null && snapshot.PowerTelemetry.PerfDecreaseReasons.Count != 0)
+            {
+                reasons = string.Join(" Â· ", new List<string>(snapshot.PowerTelemetry.PerfDecreaseReasons).ToArray());
+                danger = snapshot.PowerTelemetry.InsufficientExternalPower == true;
+            }
+            page.Children.Add(Alert("Perf Decrease", reasons, danger));
+            page.Children.Add(SectionHeading("Power Monitor é€šé“", "é€šé“å¯èƒ½é‡å æˆ–åŒ…å«æ±‡æ€»é¡¹ï¼Œä¸èƒ½æŠŠå„è¡Œç›´æ¥ç›¸åŠ "));
+
+            Style headerStyle = new Style(typeof(DataGridColumnHeader));
+            headerStyle.Setters.Add(new Setter(Control.BackgroundProperty, CardHoverBrush));
+            headerStyle.Setters.Add(new Setter(Control.ForegroundProperty, Brushes.White));
+            headerStyle.Setters.Add(new Setter(Control.BorderBrushProperty, StrokeBrush));
+            headerStyle.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(0, 0, 1, 1)));
+            headerStyle.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(10, 0, 10, 0)));
+            headerStyle.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.SemiBold));
+            headerStyle.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Left));
+
+            Style cellStyle = new Style(typeof(DataGridCell));
+            cellStyle.Setters.Add(new Setter(Control.BorderBrushProperty, Brushes.Transparent));
+            cellStyle.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(0)));
+            cellStyle.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(9, 0, 9, 0)));
+            Trigger selectedCell = new Trigger { Property = DataGridCell.IsSelectedProperty, Value = true };
+            selectedCell.Setters.Add(new Setter(Control.BackgroundProperty, AccentDarkBrush));
+            selectedCell.Setters.Add(new Setter(Control.ForegroundProperty, Brushes.White));
+            cellStyle.Triggers.Add(selectedCell);
+
+            DataGrid table = new DataGrid
+            {
+                AutoGenerateColumns = false,
+                IsReadOnly = true,
+                CanUserAddRows = false,
+                CanUserDeleteRows = false,
+                HeadersVisibility = DataGridHeadersVisibility.Column,
+                GridLinesVisibility = DataGridGridLinesVisibility.Horizontal,
+                HorizontalGridLinesBrush = StrokeBrush,
+                VerticalGridLinesBrush = Brushes.Transparent,
+                Background = CardBrush,
+                Foreground = Brushes.White,
+                BorderBrush = StrokeBrush,
+                BorderThickness = new Thickness(1),
+                RowBackground = CardBrush,
+                AlternatingRowBackground = PanelBrush,
+                ColumnHeaderStyle = headerStyle,
+                CellStyle = cellStyle,
+                ColumnHeaderHeight = 36,
+                RowHeight = 34,
+                MaxHeight = 470
+            };
+            table.Columns.Add(TextColumn("é€šé“", "ChannelIndex", 58, null));
+            table.Columns.Add(TextColumn("Rail", "RailName", 1, null));
+            table.Columns.Add(TextColumn("åŠŸç‡ W", "PowerWatts", 92, "F3"));
+            table.Columns.Add(TextColumn("ç”µæµ A", "CurrentAmps", 92, "F3"));
+            table.Columns.Add(TextColumn("ç”µå‹ V", "VoltageVolts", 92, "F4"));
+            table.Columns.Add(TextColumn("ä¼šè¯ Wh", "SessionEnergyWh", 100, "F6"));
+            table.Columns.Add(TextColumn("Driver field0", "InfoField0", 105, null));
+            table.Columns.Add(TextColumn("Rail ID", "RailId", 72, null));
+            if (snapshot.PowerTelemetry != null && snapshot.PowerTelemetry.Monitor != null)
+                table.ItemsSource = snapshot.PowerTelemetry.Monitor.Channels;
+            page.Children.Add(table);
+            return page;
+        }
+
+        private static DataGridTextColumn TextColumn(string header, string path, double width, string format)
+        {
+            Binding binding = new Binding(path);
+            if (!string.IsNullOrEmpty(format)) binding.StringFormat = format;
+            return new DataGridTextColumn
+            {
+                Header = header,
+                Binding = binding,
+                Width = width == 1 ? new DataGridLength(1, DataGridLengthUnitType.Star) : new DataGridLength(width)
+            };
+        }
+
+        private UIElement BuildProfilesPage()
+        {
+            StackPanel page = PageStack();
+            if (!string.IsNullOrEmpty(profileError))
+            {
+                page.Children.Add(Alert("é…ç½®æ¡£æ–‡ä»¶ä¸å¯ç”¨", profileError, true));
+                return page;
+            }
+            if (snapshot == null || profileStore == null || profileDocument == null)
+            {
+                page.Children.Add(EmptyState("ç­‰å¾… GPU ä¸ VBIOS ä¿¡æ¯ä»¥åˆå§‹åŒ–é…ç½®æ¡£â€¦"));
+                return page;
+            }
+
+            page.Children.Add(Alert(
+                "VBIOS èŒƒå›´é…ç½®æ¡£",
+                "é…ç½®æ–‡ä»¶ä½¿ç”¨ç¨³å®šçš„ v1 schemaï¼Œå¹¶ç»‘å®šå½“å‰ GPU åç§°å’Œ VBIOSã€‚åŠ è½½å¾…åº”ç”¨ä¸ä¼šæ‰§è¡Œç¡¬ä»¶å†™å…¥ã€‚",
+                false));
+
+            Grid layout = new Grid { Margin = new Thickness(0, 0, 10, 0) };
+            layout.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(280) });
+            layout.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+
+            Border listCard = CardShell();
+            listCard.Margin = new Thickness(0, 0, 12, 0);
+            StackPanel listStack = new StackPanel();
+            listStack.Children.Add(new TextBlock { Text = "å·²ä¿å­˜é…ç½®", FontSize = 14, FontWeight = FontWeights.SemiBold });
+            listStack.Children.Add(new TextBlock
+            {
+                Text = profileDocument.Profiles.Count + " ä¸ª Â· revision " + profileDocument.Revision,
+                Foreground = MutedBrush,
+                FontSize = 10,
+                Margin = new Thickness(0, 4, 0, 10)
+            });
+            listStack.Children.Add(new TextBlock
+            {
+                Text = profileDocument.StartupEnabled
+                    ? "å¯åŠ¨è¡Œä¸ºï¼šè®¡åˆ’ä»»åŠ¡å»¶è¿Ÿè‡ªåŠ¨åº”ç”¨æŒ‡å®šé…ç½®æ¡£"
+                    : "å¯åŠ¨è¡Œä¸ºï¼šä»… GET å½“å‰é©±åŠ¨çŠ¶æ€",
+                Foreground = AccentBrush,
+                FontSize = 10,
+                Margin = new Thickness(0, 0, 0, 8)
+            });
+            ListBox profiles = new ListBox
+            {
+                ItemsSource = profileDocument.Profiles,
+                DisplayMemberPath = "Name",
+                Background = PanelBrush,
+                Foreground = Brushes.White,
+                BorderBrush = StrokeBrush,
+                BorderThickness = new Thickness(1),
+                MinHeight = 240,
+                MaxHeight = 360
+            };
+            Style itemStyle = new Style(typeof(ListBoxItem));
+            itemStyle.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(10, 8, 10, 8)));
+            itemStyle.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Stretch));
+            itemStyle.Setters.Add(new Setter(Control.ForegroundProperty, Brushes.White));
+            Trigger selected = new Trigger { Property = ListBoxItem.IsSelectedProperty, Value = true };
+            selected.Setters.Add(new Setter(Control.BackgroundProperty, AccentDarkBrush));
+            selected.Setters.Add(new Setter(Control.ForegroundProperty, AccentBrush));
+            itemStyle.Triggers.Add(selected);
+            profiles.ItemContainerStyle = itemStyle;
+            MVoltProfile selectedProfile = FindProfile(selectedProfileId);
+            if (selectedProfile != null) profiles.SelectedItem = selectedProfile;
+            profiles.SelectionChanged += delegate
+            {
+                MVoltProfile chosen = profiles.SelectedItem as MVoltProfile;
+                selectedProfileId = chosen == null ? null : chosen.Id;
+                profileNameDraft = chosen == null ? string.Empty : chosen.Name;
+                pendingProfile = null;
+                profileDirty = false;
+                RenderActivePage();
+            };
+            listStack.Children.Add(profiles);
+            listCard.Child = listStack;
+            layout.Children.Add(listCard);
+
+            Border editorCard = CardShell();
+            editorCard.Margin = new Thickness(0);
+            StackPanel editor = new StackPanel();
+            editor.Children.Add(new TextBlock { Text = "é…ç½®æ¡£åç§°", Foreground = MutedBrush, FontSize = 11 });
+            profileNameInput = new TextBox
+            {
+                Text = profileNameDraft,
+                Background = Brush("#0C1420"),
+                Foreground = Brushes.White,
+                BorderBrush = StrokeBrush,
+                BorderThickness = new Thickness(1),
+                Padding = new Thickness(10, 8, 10, 8),
+                Margin = new Thickness(0, 7, 0, 12),
+                MaxLength = 64
+            };
+            profileNameInput.TextChanged += delegate
+            {
+                profileNameDraft = profileNameInput.Text;
+                profileDirty = true;
+            };
+            editor.Children.Add(profileNameInput);
+
+            WrapPanel actions = new WrapPanel { Margin = new Thickness(0, 0, 0, 12) };
+            Button create = SecondaryButton("æ–°å»º");
+            create.Margin = new Thickness(0, 0, 8, 8);
+            create.Click += delegate
+            {
+                selectedProfileId = null;
+                profileNameDraft = string.Empty;
+                pendingProfile = null;
+                profileDirty = true;
+                RenderActivePage();
+            };
+            actions.Children.Add(create);
+
+            Button save = PrimaryButton("ä¿å­˜å½“å‰");
+            save.Margin = new Thickness(0, 0, 8, 8);
+            save.Click += delegate { SaveCurrentProfile(); };
+            actions.Children.Add(save);
+
+            Button loadPending = SecondaryButton("è½½å…¥å¾…åº”ç”¨");
+            loadPending.Margin = new Thickness(0, 0, 8, 8);
+            loadPending.IsEnabled = selectedProfile != null;
+            loadPending.Click += delegate { LoadSelectedProfilePending(); };
+            actions.Children.Add(loadPending);
+
+            Button apply = PrimaryButton("è½½å…¥å¹¶éªŒè¯");
+            apply.Margin = new Thickness(0, 0, 8, 8);
+            apply.IsEnabled = selectedProfile != null && CanInitiateWrite;
+            apply.Click += delegate { ApplySelectedProfile(); };
+            actions.Children.Add(apply);
+
+            Button delete = SecondaryButton("åˆ é™¤");
+            delete.Margin = new Thickness(0, 0, 8, 8);
+            delete.IsEnabled = selectedProfile != null;
+            delete.Click += delegate { DeleteSelectedProfile(); };
+            actions.Children.Add(delete);
+
+            editor.Children.Add(actions);
+
+            CheckBox trayToggle = new CheckBox
+            {
+                Content = "æœ€å°åŒ–æˆ–å…³é—­ä¸»çª—å£æ—¶å‘é€åˆ°ç³»ç»Ÿæ‰˜ç›˜",
+                IsChecked = minimizeToTray,
+                Foreground = Brushes.White,
+                FontSize = 11,
+                Margin = new Thickness(0, 0, 0, 12)
+            };
+            trayToggle.Click += delegate
+            {
+                minimizeToTray = trayToggle.IsChecked == true;
+                statusText.Text = minimizeToTray
+                    ? "å·²å¯ç”¨åå°æ‰˜ç›˜ï¼›åŒå‡»æ‰˜ç›˜å›¾æ ‡å¯æ¢å¤ï¼Œå³é”®å¯åˆ·æ–°æˆ–é€€å‡ºã€‚"
+                    : "å·²å…³é—­åå°æ‰˜ç›˜ï¼›å…³é—­çª—å£å°†ç›´æ¥é€€å‡ºã€‚";
+                statusText.Foreground = AccentBrush;
+            };
+            editor.Children.Add(trayToggle);
+
+            Border startupCard = CardShell();
+            startupCard.Margin = new Thickness(0, 0, 0, 12);
+            StackPanel startupStack = new StackPanel();
+            startupStack.Children.Add(new TextBlock
+            {
+                Text = "å»¶è¿Ÿå¼€æœºè‡ªå¯",
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold
+            });
+            CheckBox startupToggle = new CheckBox
+            {
+                Content = "ç™»å½•åè‡ªåŠ¨åº”ç”¨å½“å‰æ‰€é€‰é…ç½®æ¡£å¹¶æ”¶è¿›æ‰˜ç›˜",
+                IsChecked = profileDocument.StartupEnabled && selectedProfile != null && profileDocument.StartupProfileId == selectedProfile.Id,
+                IsEnabled = selectedProfile != null && CanInitiateWrite,
+                Foreground = Brushes.White,
+                Margin = new Thickness(0, 10, 0, 4)
+            };
+            startupStack.Children.Add(startupToggle);
+            string startupDelayDraft = profileDocument.StartupDelaySeconds.ToString(CultureInfo.InvariantCulture);
+            UIElement delayField = BuildVoltageField(
+                "ç™»å½•åå»¶è¿Ÿ",
+                "ç§’",
+                startupDelayDraft,
+                delegate(string value) { startupDelayDraft = value; },
+                10,
+                600,
+                5);
+            startupStack.Children.Add(delayField);
+            Button saveStartup = PrimaryButton("ä¿å­˜è‡ªå¯è®¾ç½®");
+            saveStartup.HorizontalAlignment = HorizontalAlignment.Right;
+            saveStartup.Margin = new Thickness(0, 10, 0, 0);
+            saveStartup.IsEnabled = CanInitiateWrite;
+            saveStartup.Click += delegate { ConfigureStartup(selectedProfile, startupToggle.IsChecked == true, startupDelayDraft); };
+            startupStack.Children.Add(saveStartup);
+            startupCard.Child = startupStack;
+            editor.Children.Add(startupCard);
+
+            MVoltProfile preview = pendingProfile ?? selectedProfile;
+            editor.Children.Add(BuildProfilePreview(preview));
+            editorCard.Child = editor;
+            Grid.SetColumn(editorCard, 1);
+            layout.Children.Add(editorCard);
+            page.Children.Add(layout);
+
+            page.Children.Add(SectionHeading("é…ç½®æ–‡ä»¶", "åŸå­æ›¿æ¢å¹¶ä¿ç•™ä¸Šä¸€ç‰ˆ .bakï¼›æ™®é€šå¯åŠ¨åªè¯»å–ï¼Œåªæœ‰è®¡åˆ’ä»»åŠ¡å®ä¾‹è‡ªåŠ¨åº”ç”¨"));
+            Border pathCard = CardShell();
+            pathCard.Child = new TextBlock
+            {
+                Text = profileStore.FilePath,
+                Foreground = Brush("#B8C7DA"),
+                FontFamily = new FontFamily("Consolas"),
+                FontSize = 10,
+                TextWrapping = TextWrapping.Wrap
+            };
+            page.Children.Add(pathCard);
+            page.Children.Add(Alert(
+                "æ™®é€šå¯åŠ¨åªè¯»å–",
+                "æ‰‹åŠ¨å¯åŠ¨å§‹ç»ˆå…ˆæ‰§è¡Œ NVAPI GET ä¸”ä¸ä¼šè‡ªåŠ¨å†™å…¥ï¼›ä»…å½“ç”¨æˆ·å¯ç”¨ä¸Šæ–¹è®¡åˆ’ä»»åŠ¡æ—¶ï¼Œç™»å½•åçš„ä¸“ç”¨å®ä¾‹ä¼šåœ¨è®¾å®šå»¶è¿Ÿååº”ç”¨æŒ‡å®šé…ç½®æ¡£ã€‚",
+                false));
+            return page;
+        }
+
+        private UIElement BuildProfilePreview(MVoltProfile profile)
+        {
+            StackPanel preview = new StackPanel();
+            preview.Children.Add(new TextBlock
+            {
+                Text = profile == null ? "å°šæœªé€‰æ‹©é…ç½®æ¡£" : (pendingProfile == profile ? "å¾…åº”ç”¨é¢„è§ˆ" : "æ‰€é€‰é…ç½®é¢„è§ˆ"),
+                FontSize = 13,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 2, 0, 8)
+            });
+            if (profile == null)
+            {
+                preview.Children.Add(new TextBlock { Text = "ä¿å­˜å½“å‰è¯»æ•°ï¼Œæˆ–ä»å·¦ä¾§é€‰æ‹©ä¸€ä¸ªé…ç½®æ¡£ã€‚", Foreground = MutedBrush, FontSize = 10 });
+                return preview;
+            }
+
+            UniformGrid values = new UniformGrid { Columns = 3 };
+            values.Children.Add(Metric("æ ¸å¿ƒ", ProfileOffset(profile.Controls.Core), "Pstates20"));
+            values.Children.Add(Metric("æ˜¾å­˜", ProfileOffset(profile.Controls.Memory), profile.ConfirmedHighMemory ? "é«˜åç§»å·²ç¡®è®¤" : "Pstates20"));
+            values.Children.Add(Metric("åŠŸè€—", ProfilePercent(profile.Controls.Power), "Power Policies"));
+            values.Children.Add(Metric("Crossbar", ProfileOffset(profile.Controls.Xbar), "ClockDomains"));
+            values.Children.Add(Metric("SYS Clock", ProfileOffset(profile.Controls.SysClock), "ClockDomains domain 2"));
+            values.Children.Add(Metric("Video Clock", ProfileOffset(profile.Controls.VideoClock), "ClockDomains domain 21"));
+            int enabledFanCount = 0;
+            for (int fanIndex = 0; fanIndex < profile.Controls.Fans.Count; fanIndex++)
+                if (profile.Controls.Fans[fanIndex].Enabled) enabledFanCount++;
+            values.Children.Add(Metric("é£æ‰‡", enabledFanCount == 0 ? "å…³é—­" : enabledFanCount + " è·¯", "ClientFanCoolers Â· ä»…ä¿å­˜æ‰‹åŠ¨é€šé“"));
+            values.Children.Add(Metric("Voltage Boost", ProfilePercent(profile.Controls.VoltageBoost), "VoltRails"));
+            values.Children.Add(Metric("V/F", profile.VfCurveOffsetsKHz.Count == 0 ? "å…³é—­" : profile.VfCurveOffsetsKHz.Count + " ç‚¹", profile.VfCurveOffsetMode));
+            preview.Children.Add(values);
+
+            TextBlock rails = new TextBlock
+            {
+                Text = "NVVDD " + ProfileRange(profile.Controls.Nvvdd) + "  Â·  MSVDD " + ProfileRange(profile.Controls.Msvdd),
+                Foreground = Brush("#B8C7DA"),
+                FontSize = 10,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+            preview.Children.Add(rails);
+            return preview;
+        }
+
+        private void SaveCurrentProfile()
+        {
+            if (profileStore == null || profileDocument == null || snapshot == null) return;
+            try
+            {
+                bool confirmedHighMemory = false;
+                if (snapshot.Tuning.MemoryOffsetMHz.HasValue && snapshot.Tuning.MemoryOffsetMHz.Value > 4000)
+                {
+                    if (MessageBox.Show(
+                            "å½“å‰æ˜¾å­˜åç§»é«˜äº +4000 MHzã€‚ä»…åœ¨å·²ç»éªŒè¯ç¨³å®šæ€§æ—¶ä¿å­˜æ­¤é…ç½®æ¡£ã€‚æ˜¯å¦æ˜ç¡®ç¡®è®¤ï¼Ÿ",
+                            "ç¡®è®¤é«˜æ˜¾å­˜åç§»",
+                            MessageBoxButton.YesNo,
+                            MessageBoxImage.Warning,
+                            MessageBoxResult.No) != MessageBoxResult.Yes)
+                        return;
+                    confirmedHighMemory = true;
+                }
+                MVoltProfile captured = ProfileFactory.Capture(
+                    snapshot,
+                    profileNameInput == null ? profileNameDraft : profileNameInput.Text,
+                    confirmedHighMemory,
+                    xocEnabled);
+                ProfileDocument next = CloneProfileDocument(profileDocument);
+                MVoltProfile existing = FindProfile(next, selectedProfileId);
+                if (existing != null)
+                {
+                    captured.Id = existing.Id;
+                    int index = next.Profiles.IndexOf(existing);
+                    next.Profiles[index] = captured;
+                }
+                else
+                {
+                    next.Profiles.Add(captured);
+                }
+                profileStore.Save(next);
+                profileDocument = next;
+                selectedProfileId = captured.Id;
+                profileNameDraft = captured.Name;
+                pendingProfile = captured;
+                profileDirty = false;
+                statusText.Text = "é…ç½®æ¡£å·²ä¿å­˜ï¼š" + captured.Name;
+                statusText.Foreground = AccentBrush;
+                RenderActivePage();
+            }
+            catch (Exception ex)
+            {
+                statusText.Text = "ä¿å­˜é…ç½®æ¡£å¤±è´¥ï¼š" + ex.Message;
+                statusText.Foreground = ErrorBrush;
+            }
+        }
+
+        private void ConfigureStartup(MVoltProfile selectedProfile, bool enabled, string delayText)
+        {
+            if (profileStore == null || profileDocument == null) return;
+            int delaySeconds;
+            if (!TryParseInteger(delayText, out delaySeconds) || delaySeconds < 10 || delaySeconds > 600)
+            {
+                SetUiError("å¼€æœºè‡ªå¯å»¶è¿Ÿå¿…é¡»æ˜¯ 10..600 ç§’çš„æ•´æ•°ã€‚");
+                return;
+            }
+            if (enabled && selectedProfile == null)
+            {
+                SetUiError("å¯ç”¨å¼€æœºè‡ªåŠ¨åº”ç”¨å‰å¿…é¡»é€‰æ‹©ä¸€ä¸ªé…ç½®æ¡£ã€‚");
+                return;
+            }
+            ProfileDocument previous = CloneProfileDocument(profileDocument);
+            try
+            {
+                ProfileDocument next = CloneProfileDocument(profileDocument);
+                next.StartupEnabled = enabled;
+                next.StartupDelaySeconds = delaySeconds;
+                next.StartupProfileId = enabled ? selectedProfile.Id : string.Empty;
+                next.MinimizeToTrayAtLogon = enabled;
+                StartupTaskManager.Configure(enabled, delaySeconds);
+                try
+                {
+                    profileStore.Save(next);
+                }
+                catch
+                {
+                    StartupTaskManager.Configure(previous.StartupEnabled, previous.StartupDelaySeconds == 0 ? 60 : previous.StartupDelaySeconds);
+                    throw;
+                }
+                profileDocument = next;
+                statusText.Text = enabled
+                    ? "å·²å¯ç”¨å¼€æœºè‡ªåŠ¨åº”ç”¨ï¼šâ€œ" + selectedProfile.Name + "â€ï¼Œå»¶è¿Ÿ " + delaySeconds + " ç§’ã€‚"
+                    : "å·²å…³é—­å¼€æœºè‡ªåŠ¨åº”ç”¨å¹¶åˆ é™¤è®¡åˆ’ä»»åŠ¡ã€‚";
+                statusText.Foreground = AccentBrush;
+                RenderActivePage();
+            }
+            catch (Exception ex)
+            {
+                statusText.Text = "ä¿å­˜å¼€æœºè‡ªå¯è®¾ç½®å¤±è´¥ï¼š" + ex.Message;
+                statusText.Foreground = ErrorBrush;
+            }
+        }
+
+        private void LoadSelectedProfilePending()
+        {
+            MVoltProfile profile = FindProfile(selectedProfileId);
+            if (profile == null) return;
+            pendingProfile = profile;
+            stagedVfChanges.Clear();
+            voltageDraftInitialized = false;
+            profileNameDraft = profile.Name;
+            profileDirty = false;
+            statusText.Text = "å·²è½½å…¥å¾…åº”ç”¨ç›®æ ‡ï¼›æœªæ‰§è¡Œç¡¬ä»¶å†™å…¥ï¼š" + profile.Name;
+            statusText.Foreground = AccentBrush;
+            RenderActivePage();
+        }
+
+        private void ApplySelectedProfile()
+        {
+            MVoltProfile profile = FindProfile(selectedProfileId);
+            if (profile == null || nvBackend == null) return;
+            ExecuteConfirmedBestEffortWrite(
+                "é…ç½®æ¡£ â€œ" + profile.Name + "â€ Â· å·²å¯ç”¨çš„å…¨éƒ¨è°ƒæ ¡é¡¹ç›®",
+                delegate { return nvBackend.ApplyProfileVerified(profile); },
+                true);
+        }
+
+        private void DeleteSelectedProfile()
+        {
+            MVoltProfile profile = FindProfile(selectedProfileId);
+            if (profile == null || profileStore == null || profileDocument == null) return;
+            if (MessageBox.Show(
+                    "åˆ é™¤é…ç½®æ¡£â€œ" + profile.Name + "â€ï¼Ÿ",
+                    "åˆ é™¤é…ç½®æ¡£",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question,
+                    MessageBoxResult.No) != MessageBoxResult.Yes)
+                return;
+            try
+            {
+                ProfileDocument next = CloneProfileDocument(profileDocument);
+                MVoltProfile removing = FindProfile(next, profile.Id);
+                if (removing == null) throw new InvalidOperationException("å¾…åˆ é™¤é…ç½®æ¡£å·²ä¸å­˜åœ¨ã€‚");
+                next.Profiles.Remove(removing);
+                if (next.StartupProfileId == profile.Id)
+                {
+                    StartupTaskManager.Configure(false, next.StartupDelaySeconds == 0 ? 60 : next.StartupDelaySeconds);
+                    next.StartupProfileId = string.Empty;
+                    next.StartupEnabled = false;
+                }
+                profileStore.Save(next);
+                profileDocument = next;
+                pendingProfile = pendingProfile == profile ? null : pendingProfile;
+                selectedProfileId = profileDocument.Profiles.Count == 0 ? null : profileDocument.Profiles[0].Id;
+                profileNameDraft = profileDocument.Profiles.Count == 0 ? string.Empty : profileDocument.Profiles[0].Name;
+                profileDirty = false;
+                statusText.Text = "é…ç½®æ¡£å·²åˆ é™¤ã€‚";
+                statusText.Foreground = AccentBrush;
+                RenderActivePage();
+            }
+            catch (Exception ex)
+            {
+                statusText.Text = "åˆ é™¤é…ç½®æ¡£å¤±è´¥ï¼š" + ex.Message;
+                statusText.Foreground = ErrorBrush;
+            }
+        }
+
+        private MVoltProfile FindProfile(string id)
+        {
+            return FindProfile(profileDocument, id);
+        }
+
+        private static MVoltProfile FindProfile(ProfileDocument document, string id)
+        {
+            if (document == null || string.IsNullOrEmpty(id)) return null;
+            for (int index = 0; index < document.Profiles.Count; index++)
+                if (document.Profiles[index].Id == id) return document.Profiles[index];
+            return null;
+        }
+
+        private static ProfileDocument CloneProfileDocument(ProfileDocument document)
+        {
+            return ProfileStore.DeserializeFromUtf8(ProfileStore.SerializeToUtf8(document));
+        }
+
+        private static string ProfileRange(ProfileRangeControl control)
+        {
+            return control != null && control.Enabled ? control.MinimumMv + ".." + control.MaximumMv + " mV" : "å…³é—­";
+        }
+
+        private static string ProfileOffset(ProfileOffsetControl control)
+        {
+            return control != null && control.Enabled ? control.OffsetMHz + " MHz" : "å…³é—­";
+        }
+
+        private static string ProfilePercent(ProfilePercentControl control)
+        {
+            return control != null && control.Enabled ? control.Percent + "%" : "å…³é—­";
+        }
+
+        private UIElement BuildInterfacesPage()
+        {
+            StackPanel page = PageStack();
+            page.Children.Add(Alert(
+                "æ¥å£å…¥å£é›†åˆå·²å®ç°",
+                "å½“å‰å®ç°ä½¿ç”¨ 42 ä¸ªå”¯ä¸€ QueryInterface IDï¼›å…¶ä¸­ 0x527FC458 ç”¨äº ClockDomains MeasureFrequencyã€‚",
+                false));
+
+            Border capabilityCard = CardShell();
+            StackPanel list = new StackPanel();
+            list.Children.Add(new TextBlock { Text = "å½“å‰é©±åŠ¨å¯ç”¨æ€§", FontSize = 15, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 0, 0, 10) });
+            if (snapshot == null || snapshot.PrivateCapabilities.Count == 0)
+            {
+                list.Children.Add(new TextBlock { Text = "å°šæœªå®Œæˆé©±åŠ¨æ¢æµ‹ã€‚", Foreground = MutedBrush });
+            }
+            else
+            {
+                foreach (KeyValuePair<string, bool> item in snapshot.PrivateCapabilities)
+                    list.Children.Add(Capability(item.Key, item.Value));
+            }
+            capabilityCard.Child = list;
+            page.Children.Add(capabilityCard);
+
+            page.Children.Add(SectionHeading("å®ç°ä¸éªŒè¯çŠ¶æ€", "æ¥å£ã€ç»“æ„å¸ƒå±€ã€åˆ†é¡¹å†™å…¥å’ŒçœŸå®é©±åŠ¨å†™å…¥åˆ†åˆ«æ ¸å¯¹"));
+            UniformGrid stages = new UniformGrid { Columns = 3 };
+            stages.Children.Add(ProgressCard("42 / 42", "å…¥å£ ID", "10 ä¸ªç›´æ¥ ID + 32 ä¸ªç§æœ‰ ID"));
+            stages.Children.Add(ProgressCard("30 / 30", "å®‰å…¨ä¸å¸ƒå±€æµ‹è¯•", "ç¼“å†²åŒºã€è‰ç¨¿ä¿ç•™ã€å¤±è´¥ç»§ç»­ã€æŠ¥å‘Šã€é…ç½®æ¡£ä¸å¼‚å¸¸è·¯å¾„"));
+            stages.Children.Add(ProgressCard("12 / 12", "å®æœºå†™å…¥é¡¹ç›®", "æ ¸å¿ƒåŠŸèƒ½ä¸æ–°å¢ SYSã€Videoã€Fan å·²å®Œæˆæœ€å°å†™å…¥å’Œ GET å›è¯»"));
+            page.Children.Add(stages);
+
+            page.Children.Add(SectionHeading("æ­£å¼ç‰ˆå®‰å…¨è¾¹ç•Œ", "å†™å…¥èƒ½åŠ›ä¸ä»£è¡¨ä»»æ„å‚æ•°éƒ½å®‰å…¨"));
+            Border remaining = CardShell();
+            StackPanel remainingStack = new StackPanel();
+            remainingStack.Children.Add(Bullet("å¸¸è§„åº”ç”¨å‰æ˜¾ç¤ºç›®æ ‡å’Œé£é™©ç¡®è®¤ï¼›ä¸€é”®å¤ä½ç›´æ¥æ‰§è¡Œï¼Œä¸æ˜¾ç¤ºç¡®è®¤å¼¹çª—ã€‚"));
+            remainingStack.Children.Add(Bullet("æ¯ä¸ªé¡¹ç›®ç‹¬ç«‹å†™å…¥å¹¶å›è¯»ï¼›å¤±è´¥é¡¹ä¸ä¼šæ’¤é”€å·²æˆåŠŸé¡¹ç›®ï¼Œåç»­é¡¹ç›®ç»§ç»­æ‰§è¡Œã€‚"));
+            remainingStack.Children.Add(Bullet("æ™®é€šæ‰˜ç›˜å®ä¾‹åªç»´æŒå®æ—¶é¥æµ‹ï¼›ä»…ç”¨æˆ·å¯ç”¨çš„ç™»å½•è®¡åˆ’ä»»åŠ¡ä¼šå»¶è¿Ÿè‡ªåŠ¨åº”ç”¨æŒ‡å®šé…ç½®æ¡£ã€‚"));
+            remainingStack.Children.Add(Bullet("æ›´å¤§ç›®æ ‡ã€è¾¹ç•Œå€¼å’Œè´Ÿå‘æ ¸å¿ƒä»åº”ç”±ç”¨æˆ·é€æ­¥éªŒè¯ï¼Œä¸æ‰¿è¯ºç¨³å®šæ€§ã€‚"));
+            remaining.Child = remainingStack;
+            page.Children.Add(remaining);
+            return page;
+        }
+
+        private static UIElement ProgressCard(string value, string label, string hint)
+        {
+            Border card = CardShell();
+            StackPanel stack = new StackPanel();
+            stack.Children.Add(new TextBlock { Text = value, Foreground = AccentBrush, FontSize = 26, FontWeight = FontWeights.SemiBold });
+            stack.Children.Add(new TextBlock { Text = label, Foreground = Brushes.White, FontSize = 12, Margin = new Thickness(0, 4, 0, 4) });
+            stack.Children.Add(new TextBlock { Text = hint, Foreground = MutedBrush, FontSize = 9, TextWrapping = TextWrapping.Wrap });
+            card.Child = stack;
+            return card;
+        }
+
+        private static UIElement Bullet(string text)
+        {
+            Grid row = new Grid { Margin = new Thickness(0, 5, 0, 5) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(18) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            TextBlock dot = new TextBlock { Text = "â€¢", Foreground = AccentBrush, FontSize = 15 };
+            TextBlock body = new TextBlock { Text = text, Foreground = Brush("#C8D3E3"), FontSize = 11, TextWrapping = TextWrapping.Wrap };
+            row.Children.Add(dot);
+            Grid.SetColumn(body, 1);
+            row.Children.Add(body);
+            return row;
+        }
+
+        private static StackPanel PageStack()
+        {
+            return new StackPanel { Margin = new Thickness(0, 0, 10, 4) };
+        }
+
+        private static Border Metric(string label, string value, string hint)
+        {
+            Border card = CardShell();
+            StackPanel stack = new StackPanel();
+            stack.Children.Add(new TextBlock { Text = label, Foreground = MutedBrush, FontSize = 9, FontWeight = FontWeights.SemiBold });
+            stack.Children.Add(new TextBlock
+            {
+                Text = value,
+                Foreground = Brushes.White,
+                FontSize = 20,
+                FontWeight = FontWeights.SemiBold,
+                Margin = new Thickness(0, 6, 0, 4),
+                TextTrimming = TextTrimming.CharacterEllipsis
+            });
+            stack.Children.Add(new TextBlock { Text = hint, Foreground = Brush("#6D7A8E"), FontSize = 8, TextWrapping = TextWrapping.Wrap });
+            card.Child = stack;
+            return card;
+        }
+
+        private static Border CardShell()
+        {
+            return new Border
+            {
+                Background = CardBrush,
+                BorderBrush = StrokeBrush,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(14),
+                Margin = new Thickness(0, 0, 12, 12),
+                Padding = new Thickness(17, 15, 17, 15)
+            };
+        }
+
+        private static UIElement WrapAvailability(UIElement content, bool available, string reason)
+        {
+            if (available || content == null) return content;
+            content.IsEnabled = false;
+            content.Opacity = 0.38;
+            Grid layer = new Grid();
+            layer.Children.Add(content);
+            Border cover = UnavailableCover(reason);
+            Panel.SetZIndex(cover, 10);
+            layer.Children.Add(cover);
+            return layer;
+        }
+
+        private static void ApplyUnavailableOverlay(Border card, bool available, string reason)
+        {
+            if (card == null || available) return;
+            UIElement original = card.Child;
+            if (original != null)
+            {
+                original.IsEnabled = false;
+                original.Opacity = 0.38;
+            }
+            Grid layer = new Grid();
+            if (original != null) layer.Children.Add(original);
+            Border cover = UnavailableCover(reason);
+            Panel.SetZIndex(cover, 10);
+            layer.Children.Add(cover);
+            card.Child = layer;
+        }
+
+        private static Border UnavailableCover(string reason)
+        {
+            return new Border
+            {
+                Background = Brush("#D92A303B"),
+                CornerRadius = new CornerRadius(12),
+                Padding = new Thickness(16),
+                Child = new TextBlock
+                {
+                    Text = "æ­¤é€‰é¡¹ä¸å¯ç”¨\n" + reason,
+                    Foreground = Brush("#C8D0DA"),
+                    FontSize = 11,
+                    FontWeight = FontWeights.SemiBold,
+                    TextAlignment = TextAlignment.Center,
+                    TextWrapping = TextWrapping.Wrap,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                }
+            };
+        }
+
+        private static UIElement SectionHeading(string title, string subtitle)
+        {
+            StackPanel stack = new StackPanel { Margin = new Thickness(0, 17, 0, 11) };
+            stack.Children.Add(new TextBlock { Text = title, FontSize = 16, FontWeight = FontWeights.SemiBold });
+            stack.Children.Add(new TextBlock { Text = subtitle, Foreground = MutedBrush, FontSize = 10, Margin = new Thickness(0, 4, 0, 0) });
+            return stack;
+        }
+
+        private static Border Alert(string title, string body, bool danger)
+        {
+            Border alert = new Border
+            {
+                Background = danger ? Brush("#2A171B") : AccentDarkBrush,
+                BorderBrush = danger ? Brush("#6B3039") : Brush("#285747"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(9),
+                Padding = new Thickness(14, 11, 14, 11),
+                Margin = new Thickness(0, 0, 10, 10)
+            };
+            StackPanel stack = new StackPanel();
+            stack.Children.Add(new TextBlock { Text = title, Foreground = danger ? ErrorBrush : AccentBrush, FontWeight = FontWeights.SemiBold, FontSize = 12 });
+            stack.Children.Add(new TextBlock { Text = body, Foreground = danger ? Brush("#E7B5BA") : Brush("#B9D9CC"), FontSize = 10, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
+            alert.Child = stack;
+            return alert;
+        }
+
+        private static Border EmptyState(string text)
+        {
+            Border state = CardShell();
+            state.Padding = new Thickness(20, 30, 20, 30);
+            state.Child = new TextBlock { Text = text, Foreground = MutedBrush, HorizontalAlignment = HorizontalAlignment.Center };
+            return state;
+        }
+
+        private static UIElement Capability(string label, bool available)
+        {
+            Grid row = new Grid { Margin = new Thickness(0, 6, 0, 6) };
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.Children.Add(new TextBlock { Text = label, Foreground = Brush("#C7D2E3"), FontSize = 11 });
+            Border badge = new Border
+            {
+                Background = available ? AccentDarkBrush : Brush("#321A20"),
+                CornerRadius = new CornerRadius(8),
+                Padding = new Thickness(8, 3, 8, 3)
+            };
+            badge.Child = new TextBlock { Text = available ? "å¯ç”¨" : "æœªæä¾›", Foreground = available ? AccentBrush : ErrorBrush, FontSize = 9 };
+            Grid.SetColumn(badge, 1);
+            row.Children.Add(badge);
+            return row;
+        }
+
+        private static Button PrimaryButton(string text)
+        {
+            return new Button
+            {
+                Content = text,
+                Style = ThemedButtonStyle(true)
+            };
+        }
+
+        private static Button SecondaryButton(string text)
+        {
+            return new Button
+            {
+                Content = text,
+                Style = ThemedButtonStyle(false)
+            };
+        }
+
+        private static Style ThemedButtonStyle(bool primary)
+        {
+            Style style = new Style(typeof(Button));
+            style.Setters.Add(new Setter(Control.BackgroundProperty, primary ? AccentBrush : CardHoverBrush));
+            style.Setters.Add(new Setter(Control.ForegroundProperty, primary ? Brush("#07130F") : Brushes.White));
+            style.Setters.Add(new Setter(Control.BorderBrushProperty, primary ? AccentBrush : StrokeBrush));
+            style.Setters.Add(new Setter(Control.BorderThicknessProperty, new Thickness(1)));
+            style.Setters.Add(new Setter(Control.PaddingProperty, new Thickness(17, 9, 17, 9)));
+            style.Setters.Add(new Setter(Control.FontWeightProperty, FontWeights.SemiBold));
+            style.Setters.Add(new Setter(FrameworkElement.CursorProperty, System.Windows.Input.Cursors.Hand));
+            style.Setters.Add(new Setter(UIElement.RenderTransformOriginProperty, new Point(0.5, 0.5)));
+            style.Setters.Add(new Setter(UIElement.RenderTransformProperty, new ScaleTransform(1, 1)));
+
+            ControlTemplate template = new ControlTemplate(typeof(Button));
+            FrameworkElementFactory border = new FrameworkElementFactory(typeof(Border));
+            border.SetValue(Border.CornerRadiusProperty, new CornerRadius(8));
+            border.SetBinding(Border.BackgroundProperty, new Binding("Background") { RelativeSource = RelativeSource.TemplatedParent });
+            border.SetBinding(Border.BorderBrushProperty, new Binding("BorderBrush") { RelativeSource = RelativeSource.TemplatedParent });
+            border.SetBinding(Border.BorderThicknessProperty, new Binding("BorderThickness") { RelativeSource = RelativeSource.TemplatedParent });
+            border.SetBinding(Border.PaddingProperty, new Binding("Padding") { RelativeSource = RelativeSource.TemplatedParent });
+
+            FrameworkElementFactory presenter = new FrameworkElementFactory(typeof(ContentPresenter));
+            presenter.SetBinding(ContentPresenter.ContentProperty, new Binding("Content") { RelativeSource = RelativeSource.TemplatedParent });
+            presenter.SetBinding(ContentPresenter.ContentTemplateProperty, new Binding("ContentTemplate") { RelativeSource = RelativeSource.TemplatedParent });
+            presenter.SetBinding(ContentPresenter.ContentStringFormatProperty, new Binding("ContentStringFormat") { RelativeSource = RelativeSource.TemplatedParent });
+            presenter.SetBinding(ContentPresenter.HorizontalAlignmentProperty, new Binding("HorizontalContentAlignment") { RelativeSource = RelativeSource.TemplatedParent });
+            presenter.SetBinding(ContentPresenter.VerticalAlignmentProperty, new Binding("VerticalContentAlignment") { RelativeSource = RelativeSource.TemplatedParent });
+            border.AppendChild(presenter);
+            template.VisualTree = border;
+            style.Setters.Add(new Setter(Control.TemplateProperty, template));
+            style.Setters.Add(new Setter(Control.HorizontalContentAlignmentProperty, HorizontalAlignment.Center));
+            style.Setters.Add(new Setter(Control.VerticalContentAlignmentProperty, VerticalAlignment.Center));
+
+            Trigger hover = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
+            hover.Setters.Add(new Setter(Control.BackgroundProperty, primary ? Brush("#82EABD") : Brush("#223247")));
+            style.Triggers.Add(hover);
+
+            Trigger pressed = new Trigger { Property = ButtonBase.IsPressedProperty, Value = true };
+            pressed.Setters.Add(new Setter(UIElement.RenderTransformProperty, new ScaleTransform(0.98, 0.98)));
+            style.Triggers.Add(pressed);
+
+            Trigger disabled = new Trigger { Property = UIElement.IsEnabledProperty, Value = false };
+            disabled.Setters.Add(new Setter(Control.BackgroundProperty, Brush("#202936")));
+            disabled.Setters.Add(new Setter(Control.ForegroundProperty, Brush("#69778A")));
+            disabled.Setters.Add(new Setter(Control.BorderBrushProperty, StrokeBrush));
+            disabled.Setters.Add(new Setter(FrameworkElement.CursorProperty, System.Windows.Input.Cursors.Arrow));
+            style.Triggers.Add(disabled);
+            return style;
+        }
+
+        private static string Format(double? value, string unit)
+        {
+            return value.HasValue ? value.Value.ToString("N0", CultureInfo.InvariantCulture) + " " + unit : "â€”";
+        }
+
+        private static string HexValue(uint? value)
+        {
+            return value.HasValue ? "0x" + value.Value.ToString("X8", CultureInfo.InvariantCulture) : "â€”";
+        }
+
+        private static string OptionalUInt(uint? value)
+        {
+            return value.HasValue ? value.Value.ToString(CultureInfo.InvariantCulture) : "â€”";
+        }
+
+        private static string RailValue(GpuSnapshot sample, int railIndex)
+        {
+            VoltageRailContract rail = sample.Voltage == null ? null : sample.Voltage.FindRail(railIndex);
+            return rail == null ? "â€”" : (rail.SensedUv / 1000.0).ToString("N1", CultureInfo.InvariantCulture) + " mV";
+        }
+
+        private static string RailSummary(GpuSnapshot sample, int railIndex)
+        {
+            VoltageRailContract rail = sample.Voltage == null ? null : sample.Voltage.FindRail(railIndex);
+            if (rail == null) return "VoltRails v2";
+            return "REL " + (rail.ReliabilityLimitUv / 1000U) + " Â· MAX " + (rail.MaximumLimitUv / 1000U) + " Â· MIN " + (rail.MinimumLimitUv / 1000U) + " mV";
+        }
+
+        private static string TuningValue(int? value, string unit)
+        {
+            return value.HasValue ? value.Value.ToString(CultureInfo.InvariantCulture) + " " + unit : "â€”";
+        }
+
+        private static string TuningRange(int? minimum, int? maximum, string unit)
+        {
+            return minimum.HasValue && maximum.HasValue ? "å…è®¸ " + minimum.Value + ".." + maximum.Value + " " + unit : "é©±åŠ¨èŒƒå›´ä¸å¯ç”¨";
+        }
+
+        private static string VfSummary(GpuSnapshot sample)
+        {
+            if (sample.VfPoints.Count == 0) return "RTX 50 Status/Control";
+            VfPointSnapshot first = sample.VfPoints[0];
+            VfPointSnapshot last = sample.VfPoints[sample.VfPoints.Count - 1];
+            return (first.VoltageUv / 1000U) + ".." + (last.VoltageUv / 1000U) + " mV";
+        }
+
+        private static string XbarOffset(GpuSnapshot sample)
+        {
+            return ClockDomainOffset(sample.Xbar);
+        }
+
+        private static string ClockDomainOffset(XbarSnapshot domain)
+        {
+            return domain != null && domain.CurrentOffsetKHz.HasValue ? (domain.CurrentOffsetKHz.Value / 1000) + " MHz" : "â€”";
+        }
+
+        private static string XbarSummary(GpuSnapshot sample)
+        {
+            return ClockDomainSummary(sample.Xbar, "Crossbar");
+        }
+
+        private static string ClockDomainSummary(XbarSnapshot domain, string name)
+        {
+            if (domain == null || !domain.MinimumOffsetMHz.HasValue || !domain.MaximumOffsetMHz.HasValue)
+                return name + " ClockDomains ä¸å¯ç”¨";
+            string current = domain.CurrentOffsetKHz.HasValue ? "å½“å‰ " + (domain.CurrentOffsetKHz.Value / 1000) + " MHz Â· " : string.Empty;
+            return current + "å…è®¸ " + domain.MinimumOffsetMHz.Value + ".." + domain.MaximumOffsetMHz.Value + " MHz";
+        }
+
+        private static string PowerMonitorBoard(GpuSnapshot sample)
+        {
+            return sample.PowerTelemetry != null && sample.PowerTelemetry.Monitor != null
+                ? sample.PowerTelemetry.Monitor.BoardPowerWatts.ToString("N2", CultureInfo.InvariantCulture) + " W"
+                : "â€”";
+        }
+
+        private static string TopologyPower(GpuSnapshot sample, bool chip)
+        {
+            if (sample.PowerTelemetry == null || sample.PowerTelemetry.Topology == null) return "â€”";
+            double? value = chip ? sample.PowerTelemetry.Topology.ChipPowerWatts : sample.PowerTelemetry.Topology.BoardPowerWatts;
+            return value.HasValue ? value.Value.ToString("N2", CultureInfo.InvariantCulture) + " W" : "â€”";
+        }
+
+        private static string SessionEnergy(GpuSnapshot sample)
+        {
+            return sample.PowerTelemetry != null && sample.PowerTelemetry.Monitor != null
+                ? sample.PowerTelemetry.Monitor.PrimarySessionEnergyWh.ToString("N4", CultureInfo.InvariantCulture) + " Wh"
+                : "â€”";
+        }
+
+        private static Brush Brush(string hex)
+        {
+            return (Brush)new BrushConverter().ConvertFromString(hex);
+        }
+    }
+}

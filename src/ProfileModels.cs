@@ -42,6 +42,22 @@ namespace MVolt.Rebuild
     }
 
     [DataContract]
+    internal sealed class ProfileFanControl
+    {
+        [DataMember(Name = "cooler_id", Order = 1)]
+        public uint CoolerId { get; set; }
+
+        [DataMember(Name = "enabled", Order = 2)]
+        public bool Enabled { get; set; }
+
+        [DataMember(Name = "manual", Order = 3)]
+        public bool Manual { get; set; }
+
+        [DataMember(Name = "duty_percent", Order = 4)]
+        public uint DutyPercent { get; set; }
+    }
+
+    [DataContract]
     internal sealed class ProfileControls
     {
         public ProfileControls()
@@ -51,6 +67,9 @@ namespace MVolt.Rebuild
             Core = new ProfileOffsetControl();
             Memory = new ProfileOffsetControl();
             Xbar = new ProfileOffsetControl();
+            SysClock = new ProfileOffsetControl();
+            VideoClock = new ProfileOffsetControl();
+            Fans = new List<ProfileFanControl>();
             Power = new ProfilePercentControl();
             VoltageBoost = new ProfilePercentControl();
         }
@@ -75,6 +94,15 @@ namespace MVolt.Rebuild
 
         [DataMember(Name = "voltage_boost", Order = 7)]
         public ProfilePercentControl VoltageBoost { get; set; }
+
+        [DataMember(Name = "sys_clock", Order = 8)]
+        public ProfileOffsetControl SysClock { get; set; }
+
+        [DataMember(Name = "video_clock", Order = 9)]
+        public ProfileOffsetControl VideoClock { get; set; }
+
+        [DataMember(Name = "fans", Order = 10)]
+        public List<ProfileFanControl> Fans { get; set; }
     }
 
     [DataContract]
@@ -125,6 +153,7 @@ namespace MVolt.Rebuild
             VbiosId = string.Empty;
             GpuName = string.Empty;
             StartupProfileId = string.Empty;
+            StartupDelaySeconds = 60;
             Profiles = new List<MVoltProfile>();
         }
 
@@ -146,7 +175,13 @@ namespace MVolt.Rebuild
         [DataMember(Name = "minimize_to_tray_at_logon", Order = 6)]
         public bool MinimizeToTrayAtLogon { get; set; }
 
-        [DataMember(Name = "profiles", Order = 7)]
+        [DataMember(Name = "startup_enabled", Order = 7)]
+        public bool StartupEnabled { get; set; }
+
+        [DataMember(Name = "startup_delay_seconds", Order = 8)]
+        public int StartupDelaySeconds { get; set; }
+
+        [DataMember(Name = "profiles", Order = 9)]
         public List<MVoltProfile> Profiles { get; set; }
     }
 
@@ -349,6 +384,11 @@ namespace MVolt.Rebuild
             }
             if (!string.IsNullOrEmpty(document.StartupProfileId) && !ids.Contains(document.StartupProfileId))
                 throw new InvalidDataException("启动配置档 ID 不存在。");
+            if (document.StartupDelaySeconds == 0) document.StartupDelaySeconds = 60;
+            if (document.StartupDelaySeconds < 10 || document.StartupDelaySeconds > 600)
+                throw new InvalidDataException("开机自启延迟必须位于 10..600 秒。");
+            if (document.StartupEnabled && string.IsNullOrEmpty(document.StartupProfileId))
+                throw new InvalidDataException("启用开机自动应用时必须选择启动配置档。");
         }
 
         internal static void ValidateProfile(MVoltProfile profile)
@@ -362,6 +402,9 @@ namespace MVolt.Rebuild
                 profile.Controls.Xbar == null || profile.Controls.Power == null ||
                 profile.Controls.VoltageBoost == null)
                 throw new InvalidDataException("配置档 controls 对象不完整。");
+            if (profile.Controls.SysClock == null) profile.Controls.SysClock = new ProfileOffsetControl();
+            if (profile.Controls.VideoClock == null) profile.Controls.VideoClock = new ProfileOffsetControl();
+            if (profile.Controls.Fans == null) profile.Controls.Fans = new List<ProfileFanControl>();
 
             int voltageCap = profile.Xoc ? 1250 : 1150;
             ValidateRange(profile.Controls.Nvvdd, voltageCap, "NVVDD");
@@ -369,8 +412,19 @@ namespace MVolt.Rebuild
             ValidateOffset(profile.Controls.Core, -1000, 1000, "core");
             ValidateOffset(profile.Controls.Memory, -1000, 10000, "memory");
             ValidateOffset(profile.Controls.Xbar, -2000, 2000, "xbar");
+            ValidateOffset(profile.Controls.SysClock, -2000, 2000, "sys_clock");
+            ValidateOffset(profile.Controls.VideoClock, -2000, 2000, "video_clock");
             ValidatePercent(profile.Controls.Power, 0, 200, "power");
             ValidatePercent(profile.Controls.VoltageBoost, 0, 100, "voltage_boost");
+            HashSet<uint> fanIds = new HashSet<uint>();
+            for (int fanIndex = 0; fanIndex < profile.Controls.Fans.Count; fanIndex++)
+            {
+                ProfileFanControl fan = profile.Controls.Fans[fanIndex];
+                if (fan == null || !fanIds.Add(fan.CoolerId))
+                    throw new InvalidDataException("风扇配置包含空条目或重复 cooler ID。");
+                if (fan.DutyPercent > 100U)
+                    throw new InvalidDataException("风扇 duty 超出 0..100%。");
+            }
             if (profile.Controls.Memory.Enabled && profile.Controls.Memory.OffsetMHz > 4000 && !profile.ConfirmedHighMemory)
                 throw new InvalidDataException("+4000 MHz 以上的显存偏移未明确确认。");
 
@@ -500,6 +554,19 @@ namespace MVolt.Rebuild
             CaptureOffset(profile.Controls.Core, snapshot.Tuning.CoreOffsetMHz);
             CaptureOffset(profile.Controls.Memory, snapshot.Tuning.MemoryOffsetMHz);
             CaptureOffset(profile.Controls.Xbar, snapshot.Xbar.CurrentOffsetKHz.HasValue ? (int?)(snapshot.Xbar.CurrentOffsetKHz.Value / 1000) : null);
+            CaptureOffset(profile.Controls.SysClock, snapshot.SysClock.CurrentOffsetKHz.HasValue ? (int?)(snapshot.SysClock.CurrentOffsetKHz.Value / 1000) : null);
+            CaptureOffset(profile.Controls.VideoClock, snapshot.VideoClock.CurrentOffsetKHz.HasValue ? (int?)(snapshot.VideoClock.CurrentOffsetKHz.Value / 1000) : null);
+            for (int fanIndex = 0; fanIndex < snapshot.Fans.Count; fanIndex++)
+            {
+                FanSnapshot fan = snapshot.Fans[fanIndex];
+                profile.Controls.Fans.Add(new ProfileFanControl
+                {
+                    CoolerId = fan.CoolerId,
+                    Enabled = fan.Manual,
+                    Manual = fan.Manual,
+                    DutyPercent = fan.CurrentDutyPercent
+                });
+            }
             CapturePercent(profile.Controls.Power, snapshot.Tuning.PowerPercent);
             CapturePercent(
                 profile.Controls.VoltageBoost,

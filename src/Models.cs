@@ -29,6 +29,9 @@ namespace MVolt.Rebuild
             PowerTelemetry = new PowerTelemetryContract();
             VfPoints = new List<VfPointSnapshot>();
             Xbar = new XbarSnapshot();
+            SysClock = new XbarSnapshot();
+            VideoClock = new XbarSnapshot();
+            Fans = new List<FanSnapshot>();
             Tuning = new GpuTuningSnapshot();
             MobileRelOnlyCompatible = false;
         }
@@ -70,6 +73,10 @@ namespace MVolt.Rebuild
         public IList<VfPointSnapshot> VfPoints { get; private set; }
         public string VfError { get; set; }
         public XbarSnapshot Xbar { get; private set; }
+        public XbarSnapshot SysClock { get; private set; }
+        public XbarSnapshot VideoClock { get; private set; }
+        public IList<FanSnapshot> Fans { get; private set; }
+        public string FanControlError { get; set; }
         public GpuTuningSnapshot Tuning { get; private set; }
         public bool MobileRelOnlyCompatible { get; set; }
         public DateTime Timestamp { get; set; }
@@ -92,6 +99,18 @@ namespace MVolt.Rebuild
         public uint BaseFrequencyKHz { get; set; }
         public uint ActualFrequencyKHz { get; set; }
         public int FrequencyOffsetKHz { get; set; }
+    }
+
+    internal sealed class FanSnapshot
+    {
+        public uint CoolerId { get; set; }
+        public uint MaximumRpm { get; set; }
+        public uint CurrentRpm { get; set; }
+        public uint MinimumDutyPercent { get; set; }
+        public uint MaximumDutyPercent { get; set; }
+        public uint CurrentDutyPercent { get; set; }
+        public uint ControlMode { get; set; }
+        public bool Manual { get { return ControlMode == 1U; } }
     }
 
     internal sealed class GpuTuningSnapshot

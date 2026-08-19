@@ -62,6 +62,20 @@ namespace MVolt.Rebuild
                 });
             if (profile.Controls.Xbar.Enabled)
                 result.Attempt("Crossbar", delegate { ApplyXbarVerified(profile.Controls.Xbar.OffsetMHz); });
+            if (profile.Controls.SysClock.Enabled)
+                result.Attempt("SYS Clock", delegate { ApplySysClockVerified(profile.Controls.SysClock.OffsetMHz); });
+            if (profile.Controls.VideoClock.Enabled)
+                result.Attempt("Video Clock", delegate { ApplyVideoClockVerified(profile.Controls.VideoClock.OffsetMHz); });
+            for (int fanIndex = 0; fanIndex < profile.Controls.Fans.Count; fanIndex++)
+            {
+                ProfileFanControl fan = profile.Controls.Fans[fanIndex];
+                if (!fan.Enabled) continue;
+                ProfileFanControl selectedFan = fan;
+                result.Attempt("Fan " + selectedFan.CoolerId, delegate
+                {
+                    ApplyFanVerified(selectedFan.CoolerId, selectedFan.Manual, selectedFan.DutyPercent);
+                });
+            }
 
             if (profile.VfCurveOffsetsKHz.Count != 0)
             {
@@ -100,7 +114,7 @@ namespace MVolt.Rebuild
             ProfileWriteSnapshot snapshot = new ProfileWriteSnapshot();
             if (UsesPerformanceControls(profile)) snapshot.Tuning = ReadCompleteTuningContracts();
             if (UsesVoltageControls(profile)) snapshot.Voltage = ReadVoltageWriteSnapshot();
-            if (profile.Controls.Xbar.Enabled) snapshot.Xbar = ReadXbarWriteSnapshot();
+            if (profile.Controls.Xbar.Enabled) snapshot.Xbar = ReadXbarWriteSnapshot(NvApiXbarLayouts.Crossbar);
             if (profile.VfCurveOffsetsKHz.Count != 0) snapshot.Vf = ReadVfWriteSnapshot();
             return snapshot;
         }
@@ -309,7 +323,7 @@ namespace MVolt.Rebuild
 
             if (before.Xbar != null)
             {
-                XbarWriteSnapshot after = ReadXbarWriteSnapshot();
+                XbarWriteSnapshot after = ReadXbarWriteSnapshot(NvApiXbarLayouts.Crossbar);
                 int expected = checked(profile.Controls.Xbar.OffsetMHz * 1000);
                 if (after.Control.CurrentOffsetKHz != expected)
                     throw new InvalidOperationException("配置档 Crossbar 回读不一致。");

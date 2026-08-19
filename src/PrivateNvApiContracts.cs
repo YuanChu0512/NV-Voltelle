@@ -72,5 +72,16 @@ namespace MVolt.Rebuild
         internal const uint XbarControlVersionWord = 0x000261A4;
         internal const int XbarMeasureSize = 0x000C;
         internal const uint XbarMeasureVersionWord = 0x0001000C;
+
+        internal const uint FanCoolersGetInfo = 0xFB85B01E;
+        internal const uint FanCoolersGetStatus = 0x35AED5E8;
+        internal const uint FanCoolersGetControl = 0x814B209F;
+        internal const uint FanCoolersSetControl = 0xA58971A5;
+        internal const int FanCoolersInfoSizeV1 = 0x062C;
+        internal const uint FanCoolersInfoVersionV1 = 0x0001062C;
+        internal const int FanCoolersStatusSizeV1 = 0x06A8;
+        internal const uint FanCoolersStatusVersionV1 = 0x000106A8;
+        internal const int FanCoolersControlSizeV1 = 0x05AC;
+        internal const uint FanCoolersControlVersionV1 = 0x000105AC;
     }
 }

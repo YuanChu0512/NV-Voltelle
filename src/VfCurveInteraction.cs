@@ -75,5 +75,21 @@ namespace MVolt.Rebuild
                 throw new InvalidOperationException("所选 V/F 点没有共同的可平移范围。");
             return Math.Max(minimumDeltaMHz, Math.Min(maximumDeltaMHz, requestedDeltaMHz));
         }
+
+        internal static void RemoveSuccessfulDrafts(IList<VfOffsetChange> drafts, IList<string> successfulStepLabels)
+        {
+            if (drafts == null) throw new ArgumentNullException("drafts");
+            if (successfulStepLabels == null || successfulStepLabels.Count == 0) return;
+            HashSet<int> successful = new HashSet<int>();
+            for (int labelIndex = 0; labelIndex < successfulStepLabels.Count; labelIndex++)
+            {
+                string label = successfulStepLabels[labelIndex];
+                if (label == null || !label.StartsWith("点 ", StringComparison.Ordinal)) continue;
+                int pointIndex;
+                if (Int32.TryParse(label.Substring(2), out pointIndex)) successful.Add(pointIndex);
+            }
+            for (int draftIndex = drafts.Count - 1; draftIndex >= 0; draftIndex--)
+                if (drafts[draftIndex] != null && successful.Contains(drafts[draftIndex].Index)) drafts.RemoveAt(draftIndex);
+        }
     }
 }

@@ -7,7 +7,7 @@ namespace MVolt.Rebuild
     {
         internal const string ProductName = "NV Voltelle";
         internal const string ProductTagline = "NVIDIA GPU Tuning Studio";
-        internal const string ProductVersion = "1.3.3";
+        internal const string ProductVersion = "1.4.0";
         internal const string Maker = "Mozelle";
         internal const string BilibiliId = "Mozelle_33";
         internal const string FreeNotice = "本软件完全免费";

@@ -6,34 +6,41 @@ namespace MVolt.Rebuild
     {
         private void ReadXbar(GpuSnapshot result)
         {
+            ReadClockDomain(result.Xbar, NvApiXbarLayouts.Crossbar);
+            ReadClockDomain(result.SysClock, NvApiXbarLayouts.Sys);
+            ReadClockDomain(result.VideoClock, NvApiXbarLayouts.Video);
+        }
+
+        private void ReadClockDomain(XbarSnapshot target, ClockDomainDescriptor domain)
+        {
             try
             {
                 byte[] infoBuffer = GetBuffer(
                     PrivateNvApiContracts.XbarGetInfo,
                     NvApiXbarLayouts.CreateInfoRequest(),
                     "NvAPI_GPU_ClockClkDomainsGetInfo");
-                XbarInfoContract info = NvApiXbarLayouts.ParseInfo(infoBuffer);
+                XbarInfoContract info = NvApiXbarLayouts.ParseInfo(infoBuffer, domain);
 
                 byte[] controlBuffer = GetBuffer(
                     PrivateNvApiContracts.XbarGetControl,
-                    NvApiXbarLayouts.CreateControlRequest(),
+                    NvApiXbarLayouts.CreateControlRequest(domain),
                     "NvAPI_GPU_ClockClkDomainsGetControl");
-                XbarControlContract control = NvApiXbarLayouts.ParseControl(controlBuffer);
+                XbarControlContract control = NvApiXbarLayouts.ParseControl(controlBuffer, domain);
 
                 byte[] measureBuffer = GetBuffer(
                     PrivateNvApiContracts.XbarMeasureFrequency,
-                    NvApiXbarLayouts.CreateMeasureRequest(),
-                    "Crossbar MeasureFrequency helper");
+                    NvApiXbarLayouts.CreateMeasureRequest(domain),
+                    domain.Name + " MeasureFrequency helper");
 
-                result.Xbar.Flags = info.Flags;
-                result.Xbar.MinimumOffsetMHz = info.MinimumOffsetMHz;
-                result.Xbar.MaximumOffsetMHz = info.MaximumOffsetMHz;
-                result.Xbar.CurrentOffsetKHz = control.CurrentOffsetKHz;
-                result.Xbar.MeasuredFrequencyKHz = NvApiXbarLayouts.ParseMeasuredFrequency(measureBuffer);
+                target.Flags = info.Flags;
+                target.MinimumOffsetMHz = info.MinimumOffsetMHz;
+                target.MaximumOffsetMHz = info.MaximumOffsetMHz;
+                target.CurrentOffsetKHz = control.CurrentOffsetKHz;
+                target.MeasuredFrequencyKHz = NvApiXbarLayouts.ParseMeasuredFrequency(measureBuffer, domain);
             }
             catch (Exception ex)
             {
-                result.Xbar.Error = ex.Message;
+                target.Error = ex.Message;
             }
         }
     }

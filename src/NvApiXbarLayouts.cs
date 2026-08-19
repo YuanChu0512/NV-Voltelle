@@ -15,12 +15,36 @@ namespace MVolt.Rebuild
         public int CurrentOffsetKHz { get; set; }
     }
 
+    internal sealed class ClockDomainDescriptor
+    {
+        public string Name { get; set; }
+        public uint DomainId { get; set; }
+        public uint InfoFlag { get; set; }
+        public int ControlSelector { get; set; }
+        public int ControlMarkerOffset { get; set; }
+        public int ControlOffsetField { get; set; }
+    }
+
     internal static class NvApiXbarLayouts
     {
         private const int InfoEntryCount = 32;
         private const int InfoEntriesOffset = 0xB0;
         private const int InfoEntryStride = 0x430;
-        private const int ControlOffsetField = 0x53C;
+        internal static readonly ClockDomainDescriptor Crossbar = new ClockDomainDescriptor
+        {
+            Name = "Crossbar", DomainId = 1U, InfoFlag = 2U, ControlSelector = 2,
+            ControlMarkerOffset = 0x428, ControlOffsetField = 0x53C
+        };
+        internal static readonly ClockDomainDescriptor Sys = new ClockDomainDescriptor
+        {
+            Name = "SYS", DomainId = 2U, InfoFlag = 8U, ControlSelector = 8,
+            ControlMarkerOffset = 0xA30, ControlOffsetField = 0xB44
+        };
+        internal static readonly ClockDomainDescriptor Video = new ClockDomainDescriptor
+        {
+            Name = "Video", DomainId = 21U, InfoFlag = 0x10U, ControlSelector = 0x10,
+            ControlMarkerOffset = 0xD34, ControlOffsetField = 0xE48
+        };
 
         internal static byte[] CreateInfoRequest()
         {
@@ -31,21 +55,27 @@ namespace MVolt.Rebuild
 
         internal static XbarInfoContract ParseInfo(byte[] buffer)
         {
-            RequireBuffer(buffer, PrivateNvApiContracts.XbarInfoSize, PrivateNvApiContracts.XbarInfoVersionWord, "Crossbar Info");
+            return ParseInfo(buffer, Crossbar);
+        }
+
+        internal static XbarInfoContract ParseInfo(byte[] buffer, ClockDomainDescriptor domain)
+        {
+            if (domain == null) throw new ArgumentNullException("domain");
+            RequireBuffer(buffer, PrivateNvApiContracts.XbarInfoSize, PrivateNvApiContracts.XbarInfoVersionWord, domain.Name + " Info");
             uint flags = NvApiTuningLayouts.ReadUInt32(buffer, 0x08);
-            if ((flags & 2U) == 0)
-                throw new InvalidOperationException("Crossbar Info flags 未设置 bit 1。");
+            if ((flags & domain.InfoFlag) == 0)
+                throw new InvalidOperationException(domain.Name + " Info flags 未设置 0x" + domain.InfoFlag.ToString("X") + "。");
 
             for (int index = 0; index < InfoEntryCount; index++)
             {
                 int entry = InfoEntriesOffset + index * InfoEntryStride;
                 if (entry + 0x40 > buffer.Length) break;
-                if (NvApiTuningLayouts.ReadUInt32(buffer, entry) != 1U) continue;
+                if (NvApiTuningLayouts.ReadUInt32(buffer, entry) != domain.DomainId) continue;
                 uint packed = NvApiTuningLayouts.ReadUInt32(buffer, entry + 0x3C);
                 int minimum = unchecked((short)(packed & 0xFFFFU));
                 int maximum = unchecked((short)(packed >> 16));
                 if (minimum < -2000 || maximum > 2000 || minimum > maximum)
-                    throw new InvalidOperationException("Crossbar offset 范围不符合 -2000..2000 MHz 契约。");
+                    throw new InvalidOperationException(domain.Name + " offset 范围不符合 -2000..2000 MHz 契约。");
                 return new XbarInfoContract
                 {
                     Flags = flags,
@@ -54,35 +84,51 @@ namespace MVolt.Rebuild
                     EntryIndex = index
                 };
             }
-            throw new InvalidOperationException("Crossbar Info 未找到类型 1 条目。");
+            throw new InvalidOperationException(domain.Name + " Info 未找到 domain " + domain.DomainId + " 条目。");
         }
 
         internal static byte[] CreateControlRequest()
         {
+            return CreateControlRequest(Crossbar);
+        }
+
+        internal static byte[] CreateControlRequest(ClockDomainDescriptor domain)
+        {
+            if (domain == null) throw new ArgumentNullException("domain");
             byte[] buffer = new byte[PrivateNvApiContracts.XbarControlSize];
             NvApiTuningLayouts.WriteUInt32(buffer, 0, PrivateNvApiContracts.XbarControlVersionWord);
-            NvApiTuningLayouts.WriteInt32(buffer, 0x08, 2);
+            NvApiTuningLayouts.WriteInt32(buffer, 0x08, domain.ControlSelector);
             return buffer;
         }
 
         internal static XbarControlContract ParseControl(byte[] buffer)
         {
-            RequireControl(buffer);
+            return ParseControl(buffer, Crossbar);
+        }
+
+        internal static XbarControlContract ParseControl(byte[] buffer, ClockDomainDescriptor domain)
+        {
+            RequireControl(buffer, domain);
             return new XbarControlContract
             {
-                CurrentOffsetKHz = NvApiTuningLayouts.ReadInt32(buffer, ControlOffsetField)
+                CurrentOffsetKHz = NvApiTuningLayouts.ReadInt32(buffer, domain.ControlOffsetField)
             };
         }
 
         internal static byte[] CreateControlSet(byte[] currentControl, XbarInfoContract info, int requestedOffsetMHz)
         {
-            RequireControl(currentControl);
+            return CreateControlSet(currentControl, info, requestedOffsetMHz, Crossbar);
+        }
+
+        internal static byte[] CreateControlSet(byte[] currentControl, XbarInfoContract info, int requestedOffsetMHz, ClockDomainDescriptor domain)
+        {
+            RequireControl(currentControl, domain);
             if (info == null) throw new ArgumentNullException("info");
             if (requestedOffsetMHz < info.MinimumOffsetMHz || requestedOffsetMHz > info.MaximumOffsetMHz)
-                throw new ArgumentOutOfRangeException("requestedOffsetMHz", "Crossbar offset 超出驱动范围。");
-            for (int offset = 0x540; offset <= 0x54C; offset += 4)
+                throw new ArgumentOutOfRangeException("requestedOffsetMHz", domain.Name + " offset 超出驱动范围。");
+            for (int offset = domain.ControlOffsetField + 4; offset <= domain.ControlOffsetField + 0x10; offset += 4)
                 if (NvApiTuningLayouts.ReadUInt32(currentControl, offset) != 0)
-                    throw new InvalidOperationException("Crossbar Control 0x" + offset.ToString("X") + " 保留字段不是 0。");
+                    throw new InvalidOperationException(domain.Name + " Control 0x" + offset.ToString("X") + " 保留字段不是 0。");
 
             int requestedKHz;
             try
@@ -91,36 +137,49 @@ namespace MVolt.Rebuild
             }
             catch (OverflowException)
             {
-                throw new ArgumentOutOfRangeException("requestedOffsetMHz", "Crossbar MHz 转 kHz 溢出。");
+                throw new ArgumentOutOfRangeException("requestedOffsetMHz", domain.Name + " MHz 转 kHz 溢出。");
             }
             byte[] result = (byte[])currentControl.Clone();
-            NvApiTuningLayouts.WriteInt32(result, ControlOffsetField, requestedKHz);
+            NvApiTuningLayouts.WriteInt32(result, domain.ControlOffsetField, requestedKHz);
             return result;
         }
 
         internal static byte[] CreateMeasureRequest()
         {
+            return CreateMeasureRequest(Crossbar);
+        }
+
+        internal static byte[] CreateMeasureRequest(ClockDomainDescriptor domain)
+        {
+            if (domain == null) throw new ArgumentNullException("domain");
             byte[] buffer = new byte[PrivateNvApiContracts.XbarMeasureSize];
             NvApiTuningLayouts.WriteUInt32(buffer, 0, PrivateNvApiContracts.XbarMeasureVersionWord);
-            NvApiTuningLayouts.WriteInt32(buffer, 0x04, 1);
+            NvApiTuningLayouts.WriteUInt32(buffer, 0x04, domain.DomainId);
             return buffer;
         }
 
         internal static uint ParseMeasuredFrequency(byte[] buffer)
         {
-            RequireBuffer(buffer, PrivateNvApiContracts.XbarMeasureSize, PrivateNvApiContracts.XbarMeasureVersionWord, "Crossbar Measure");
-            if (NvApiTuningLayouts.ReadUInt32(buffer, 0x04) != 1U)
-                throw new InvalidOperationException("Crossbar Measure +0x04 不是 1。");
+            return ParseMeasuredFrequency(buffer, Crossbar);
+        }
+
+        internal static uint ParseMeasuredFrequency(byte[] buffer, ClockDomainDescriptor domain)
+        {
+            if (domain == null) throw new ArgumentNullException("domain");
+            RequireBuffer(buffer, PrivateNvApiContracts.XbarMeasureSize, PrivateNvApiContracts.XbarMeasureVersionWord, domain.Name + " Measure");
+            if (NvApiTuningLayouts.ReadUInt32(buffer, 0x04) != domain.DomainId)
+                throw new InvalidOperationException(domain.Name + " Measure +0x04 不是 " + domain.DomainId + "。");
             return NvApiTuningLayouts.ReadUInt32(buffer, 0x08);
         }
 
-        private static void RequireControl(byte[] buffer)
+        private static void RequireControl(byte[] buffer, ClockDomainDescriptor domain)
         {
-            RequireBuffer(buffer, PrivateNvApiContracts.XbarControlSize, PrivateNvApiContracts.XbarControlVersionWord, "Crossbar Control");
-            if (NvApiTuningLayouts.ReadUInt32(buffer, 0x08) != 2U)
-                throw new InvalidOperationException("Crossbar Control +0x08 不是 2。");
-            if (NvApiTuningLayouts.ReadUInt32(buffer, 0x428) != 0x0FU)
-                throw new InvalidOperationException("Crossbar Control +0x428 不是 0x0F。");
+            if (domain == null) throw new ArgumentNullException("domain");
+            RequireBuffer(buffer, PrivateNvApiContracts.XbarControlSize, PrivateNvApiContracts.XbarControlVersionWord, domain.Name + " Control");
+            if (NvApiTuningLayouts.ReadUInt32(buffer, 0x08) != (uint)domain.ControlSelector)
+                throw new InvalidOperationException(domain.Name + " Control +0x08 不是 " + domain.ControlSelector + "。");
+            if (NvApiTuningLayouts.ReadUInt32(buffer, domain.ControlMarkerOffset) != 0x0FU)
+                throw new InvalidOperationException(domain.Name + " Control +0x" + domain.ControlMarkerOffset.ToString("X") + " 不是 0x0F。");
         }
 
         private static void RequireBuffer(byte[] buffer, int size, uint version, string name)

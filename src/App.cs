@@ -18,6 +18,7 @@ namespace MVolt.Rebuild
             bool startInTray = false;
             bool requireElevated = false;
             bool readOnly = false;
+            bool startupAutoApply = false;
 #if NV_VOLTELLE_UI_QA
             // The dedicated QA binary is always interactive while every NVAPI SET
             // remains compile-time disabled. This also makes a direct double-click
@@ -41,6 +42,13 @@ namespace MVolt.Rebuild
                 if (String.Equals(argument, "--read-only", StringComparison.OrdinalIgnoreCase))
                 {
                     readOnly = true;
+                    continue;
+                }
+                if (String.Equals(argument, "--startup-auto-apply", StringComparison.OrdinalIgnoreCase))
+                {
+                    startupAutoApply = true;
+                    startInTray = true;
+                    requireElevated = true;
                     continue;
                 }
 #if NV_VOLTELLE_UI_QA
@@ -161,7 +169,7 @@ namespace MVolt.Rebuild
             Application app = new Application();
             app.ShutdownMode = ShutdownMode.OnMainWindowClose;
             bool allowHardwareWrites = !readOnly && VoltelleBrand.IsAdministrator();
-            app.Run(new MainWindow(startInTray, allowHardwareWrites, readOnly, uiQaMode, uiQaTrayCycle));
+            app.Run(new MainWindow(startInTray, allowHardwareWrites, readOnly, uiQaMode, uiQaTrayCycle, startupAutoApply));
         }
 
         private static void Fail(string message, bool suppressUi)

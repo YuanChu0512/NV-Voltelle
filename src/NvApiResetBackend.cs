@@ -35,6 +35,21 @@ namespace MVolt.Rebuild
             result.Attempt("显存频率偏移", delegate { ApplyPstateOffsetVerified(NvApiTuningLayouts.MemoryDomain, 0); });
             result.Attempt("Boost Lock", delegate { ApplyBoostLockVerified(false); });
             result.Attempt("Crossbar", delegate { ApplyXbarVerified(0); });
+            result.Attempt("SYS Clock", delegate { ApplySysClockVerified(0); });
+            result.Attempt("Video Clock", delegate { ApplyVideoClockVerified(0); });
+            try
+            {
+                FanWriteSnapshot fans = ReadFanWriteSnapshot();
+                for (int fanIndex = 0; fanIndex < fans.Contract.Fans.Count; fanIndex++)
+                {
+                    uint coolerId = fans.Contract.Fans[fanIndex].CoolerId;
+                    result.Attempt("Fan " + coolerId + " Auto", delegate { ApplyFanVerified(coolerId, false, 0); });
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Attempt("风扇自动控制", delegate { throw ex; });
+            }
 
             try
             {
@@ -88,7 +103,7 @@ namespace MVolt.Rebuild
             {
                 Tuning = ReadCompleteTuningContracts(),
                 Voltage = ReadVoltageWriteSnapshot(),
-                Xbar = ReadXbarWriteSnapshot(),
+                Xbar = ReadXbarWriteSnapshot(NvApiXbarLayouts.Crossbar),
                 Vf = ReadVfWriteSnapshot()
             };
         }
@@ -175,7 +190,7 @@ namespace MVolt.Rebuild
                 throw new InvalidOperationException("一键复位性能控制回读不一致。");
 
             AssertVoltageReset(before.Voltage.Contract, ReadVoltageWriteSnapshot().Contract);
-            if (ReadXbarWriteSnapshot().Control.CurrentOffsetKHz != 0)
+            if (ReadXbarWriteSnapshot(NvApiXbarLayouts.Crossbar).Control.CurrentOffsetKHz != 0)
                 throw new InvalidOperationException("一键复位 Crossbar 回读不一致。");
             AssertAllVfOffsetsZero(ReadVfWriteSnapshot().Curve.Points);
         }

@@ -102,30 +102,46 @@ namespace MVolt.Rebuild
 
         internal void ApplyXbarVerified(int requestedOffsetMHz)
         {
+            ApplyClockDomainVerified(requestedOffsetMHz, NvApiXbarLayouts.Crossbar);
+        }
+
+        internal void ApplySysClockVerified(int requestedOffsetMHz)
+        {
+            ApplyClockDomainVerified(requestedOffsetMHz, NvApiXbarLayouts.Sys);
+        }
+
+        internal void ApplyVideoClockVerified(int requestedOffsetMHz)
+        {
+            ApplyClockDomainVerified(requestedOffsetMHz, NvApiXbarLayouts.Video);
+        }
+
+        private void ApplyClockDomainVerified(int requestedOffsetMHz, ClockDomainDescriptor domain)
+        {
             byte[] requested = null;
             VerifiedWriteTransaction.Execute(
                 HardwareWritesEnabled,
-                ReadXbarWriteSnapshot,
+                delegate { return ReadXbarWriteSnapshot(domain); },
                 delegate(XbarWriteSnapshot before)
                 {
                     requested = NvApiXbarLayouts.CreateControlSet(
                         before.ControlBuffer,
                         before.Info,
-                        requestedOffsetMHz);
+                        requestedOffsetMHz,
+                        domain);
                 },
                 delegate
                 {
                     SetBuffer(
                         PrivateNvApiContracts.XbarSetControl,
                         (byte[])requested.Clone(),
-                        "NvAPI_GPU_ClockClkDomainsSetControl");
+                        "NvAPI_GPU_ClockClkDomainsSetControl (" + domain.Name + ")");
                 },
                 delegate
                 {
-                    XbarWriteSnapshot after = ReadXbarWriteSnapshot();
+                    XbarWriteSnapshot after = ReadXbarWriteSnapshot(domain);
                     int expectedKHz = checked(requestedOffsetMHz * 1000);
                     if (after.Control.CurrentOffsetKHz != expectedKHz)
-                        throw new InvalidOperationException("Crossbar offset 回读与请求不一致。");
+                        throw new InvalidOperationException(domain.Name + " offset 回读与请求不一致。");
                 });
         }
 
@@ -221,7 +237,7 @@ namespace MVolt.Rebuild
             };
         }
 
-        private XbarWriteSnapshot ReadXbarWriteSnapshot()
+        private XbarWriteSnapshot ReadXbarWriteSnapshot(ClockDomainDescriptor domain)
         {
             byte[] infoBuffer = GetBuffer(
                 PrivateNvApiContracts.XbarGetInfo,
@@ -229,20 +245,20 @@ namespace MVolt.Rebuild
                 "NvAPI_GPU_ClockClkDomainsGetInfo");
             byte[] controlBuffer = GetBuffer(
                 PrivateNvApiContracts.XbarGetControl,
-                NvApiXbarLayouts.CreateControlRequest(),
+                NvApiXbarLayouts.CreateControlRequest(domain),
                 "NvAPI_GPU_ClockClkDomainsGetControl");
             byte[] measureBuffer = GetBuffer(
                 PrivateNvApiContracts.XbarMeasureFrequency,
-                NvApiXbarLayouts.CreateMeasureRequest(),
-                "Crossbar MeasureFrequency helper");
+                NvApiXbarLayouts.CreateMeasureRequest(domain),
+                domain.Name + " MeasureFrequency helper");
             return new XbarWriteSnapshot
             {
                 InfoBuffer = infoBuffer,
                 ControlBuffer = controlBuffer,
                 MeasureBuffer = measureBuffer,
-                Info = NvApiXbarLayouts.ParseInfo(infoBuffer),
-                Control = NvApiXbarLayouts.ParseControl(controlBuffer),
-                MeasuredFrequencyKHz = NvApiXbarLayouts.ParseMeasuredFrequency(measureBuffer)
+                Info = NvApiXbarLayouts.ParseInfo(infoBuffer, domain),
+                Control = NvApiXbarLayouts.ParseControl(controlBuffer, domain),
+                MeasuredFrequencyKHz = NvApiXbarLayouts.ParseMeasuredFrequency(measureBuffer, domain)
             };
         }
 
