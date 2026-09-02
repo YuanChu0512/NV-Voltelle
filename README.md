@@ -11,10 +11,12 @@
 
 - NVIDIA RTX 50系列核心、显存、功耗、电压与时钟调校。
 - Core/Memory Power Channel功率限制与写后回读。
+- 笔记本GPU自动禁用整板功耗上限，Core/Memory OCP保持独立可用。
 - NVVDD/MSVDD电压范围、Crossbar、SYS、Video与V/F曲线控制。
 - 多风扇控制、实时遥测、配置档、一键复位与延迟开机应用。
 - 中文/English、黑白主题、系统托盘后台运行。
 - 显卡高性能模式、旧版本数据清理和GitHub更新检查。
+- 配置与缓存按软件版本隔离；版本不匹配时自动重建。
 
 ## 使用方法
 
